@@ -6,8 +6,19 @@
 
 ## Fase
 
+Lançamento da Noryos Inovações — construindo a fundação digital (site institucional) antes de iniciar prospecção ativa.
+
 ## Prioridade principal
+
+Finalizar as pendências do site institucional (`projetos/Noryos-Inovacoes/site/`): número de WhatsApp definitivo, projeto Supabase real, logo/favicon, IDs de analytics, e deploy com o domínio noryosinovacoes.com.br.
 
 ## O que pode esperar
 
+- Nicho odontologia (ainda não confirmado)
+- CRM completo / integração com n8n
+- Blog e páginas de conteúdo SEO
+- Redes sociais e ads da própria Noryos (o site vem primeiro, por decisão do usuário)
+
 ## Contexto com prazo
+
+Nenhum prazo definido ainda pelo usuário.
