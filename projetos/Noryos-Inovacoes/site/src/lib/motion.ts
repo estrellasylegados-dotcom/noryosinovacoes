@@ -8,7 +8,13 @@ import type { CSSProperties } from "react";
  * pelos componentes.
  */
 
-export type AnimName = "fade-up" | "fade" | "fade-left" | "scale-in" | "slide-reveal";
+export type AnimName =
+  | "fade-up"
+  | "fade"
+  | "fade-left"
+  | "fade-right"
+  | "scale-in"
+  | "slide-reveal";
 
 /** Delay de stagger por índice (ms) — o CSS lê `--i`. Cap pra não arrastar. */
 export const STAGGER_STEP = 70;

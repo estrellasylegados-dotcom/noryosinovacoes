@@ -1,7 +1,8 @@
 "use client";
 
 import { CSSProperties } from "react";
-import { useInView } from "@/lib/hooks";
+import { useInView, useCountUp } from "@/lib/hooks";
+import { animDelay } from "@/lib/motion";
 import { Icon } from "@/components/ui/Icon";
 import { ButtonLink } from "@/components/ui/Button";
 import { diagnosticoMock } from "@/content/home";
@@ -9,13 +10,51 @@ import { diagnosticoMock } from "@/content/home";
 /**
  * §18 — o Diagnóstico Digital como ferramenta visual, não texto + botão.
  * Mock claramente rotulado "Demonstração ilustrativa" (regra de
- * credibilidade: nunca passar como dado de cliente real). As barras
- * preenchem quando entram na viewport.
+ * credibilidade: nunca passar como dado de cliente real). Quando entra na
+ * viewport: as barras preenchem em stagger e os números contam até o valor
+ * ilustrativo; a lista de oportunidades aparece depois.
  */
 function tone(v: number) {
   if (v >= 65) return "var(--color-green)";
   if (v >= 45) return "var(--color-cyan)";
   return "color-mix(in oklab, var(--color-cyan) 55%, var(--color-text-dim))";
+}
+
+function Metric({
+  label,
+  valor,
+  index,
+  active,
+}: {
+  label: string;
+  valor: number;
+  index: number;
+  active: boolean;
+}) {
+  const count = useCountUp(valor, active, 900 + index * 120);
+  return (
+    <div>
+      <div className="flex items-baseline justify-between">
+        <span className="text-sm text-[var(--color-text-muted)]">{label}</span>
+        <span className="t-mono text-sm text-[var(--color-text)] tabular-nums">{count}</span>
+      </div>
+      <div
+        className="sheen-track mt-1.5 h-2 overflow-hidden rounded-full bg-[var(--color-surface-3)]"
+        style={{ "--sheen-delay": `${index * 700}ms` } as CSSProperties}
+      >
+        <div
+          className="fill-bar h-full rounded-full"
+          style={
+            {
+              width: `${valor}%`,
+              background: tone(valor),
+              "--fill-delay": `${index * 110}ms`,
+            } as CSSProperties
+          }
+        />
+      </div>
+    </div>
+  );
 }
 
 export function DiagnosticPreview() {
@@ -35,28 +74,15 @@ export function DiagnosticPreview() {
 
       <div className="mt-6 grid gap-4">
         {diagnosticoMock.metricas.map((m, i) => (
-          <div key={m.label}>
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm text-[var(--color-text-muted)]">{m.label}</span>
-              <span className="t-mono text-sm text-[var(--color-text)]">{m.valor}</span>
-            </div>
-            <div className="sheen-track mt-1.5 h-2 overflow-hidden rounded-full bg-[var(--color-surface-3)]" style={{ "--sheen-delay": `${i * 700}ms` } as CSSProperties}>
-              <div
-                className="fill-bar h-full rounded-full"
-                style={
-                  {
-                    width: `${m.valor}%`,
-                    background: tone(m.valor),
-                    "--fill-delay": `${i * 110}ms`,
-                  } as CSSProperties
-                }
-              />
-            </div>
-          </div>
+          <Metric key={m.label} label={m.label} valor={m.valor} index={i} active={inView} />
         ))}
       </div>
 
-      <div className="mt-7 border-t border-[var(--hairline)] pt-5">
+      <div
+        data-anim="fade-up"
+        className={`mt-7 border-t border-[var(--hairline)] pt-5 ${inView ? "is-in" : ""}`}
+        style={animDelay(760)}
+      >
         <p className="text-sm font-semibold text-[var(--color-text)]">
           {diagnosticoMock.oportunidades.length} oportunidades identificadas
         </p>

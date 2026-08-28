@@ -11,6 +11,9 @@ import { noryosOSFolders } from "@/content/noryos-os";
  * categorias que abre/fecha, e um painel contextual que reage à seleção.
  * Só a abstração comercial do método — nunca a estrutura real interna.
  */
+/** Indicador de estado do painel (§12) — ciano/verde, uso moderado. */
+const STATUS = ["Organizado", "Conectado", "Documentado"] as const;
+
 export function NoryosOSExplorer() {
   const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.3 });
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -48,7 +51,8 @@ export function NoryosOSExplorer() {
                 <li
                   key={folder.nome}
                   data-anim="fade-left"
-                  className={inView ? "is-in" : ""}
+                  data-selected={isSel}
+                  className={`tree-item ${inView ? "is-in" : ""}`}
                   style={{ "--anim-delay": `${index * 55}ms` } as CSSProperties}
                 >
                   <button
@@ -99,22 +103,30 @@ export function NoryosOSExplorer() {
           </ul>
         </div>
 
-        {/* painel contextual */}
+        {/* painel contextual — troca com fade + slide a cada seleção */}
         <div className="p-6">
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-dim)]">
-            Categoria selecionada
-          </span>
-          <h3 className="t-h3 mt-2 text-[1.15rem] text-[var(--color-text)]">{active.nome}</h3>
-          <p className="mt-2 text-sm text-[var(--color-text-muted)]">{active.descricao}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {active.itens.map((item) => (
-              <span
-                key={item}
-                className="rounded-full border border-[var(--hairline-strong)] bg-[var(--color-surface-2)] px-2.5 py-1 text-xs text-[var(--color-text-muted)]"
-              >
-                {item}
-              </span>
-            ))}
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-dim)]">
+              Categoria selecionada
+            </span>
+            <span className="flex items-center gap-1.5 font-mono text-[10px] text-[var(--color-text-dim)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-green)]" aria-hidden />
+              {STATUS[selected % STATUS.length]}
+            </span>
+          </div>
+          <div key={selected} className="panel-swap">
+            <h3 className="t-h3 mt-2 text-[1.15rem] text-[var(--color-text)]">{active.nome}</h3>
+            <p className="mt-2 text-sm text-[var(--color-text-muted)]">{active.descricao}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {active.itens.map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-[var(--hairline-strong)] bg-[var(--color-surface-2)] px-2.5 py-1 text-xs text-[var(--color-text-muted)]"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
           <p className="mt-6 border-t border-[var(--hairline)] pt-4 font-mono text-[11px] text-[var(--color-text-dim)]">
             organizado no Noryos OS do seu projeto

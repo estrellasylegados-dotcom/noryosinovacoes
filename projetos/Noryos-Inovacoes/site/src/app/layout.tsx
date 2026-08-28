@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { FloatingWhatsapp } from "@/components/FloatingWhatsapp";
+import { ScrollProgress } from "@/components/ui/ScrollProgress";
 import { siteConfig } from "@/lib/config";
 import { organizationJsonLd, websiteJsonLd, jsonLdScript } from "@/lib/seo";
 
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         >
           Pular para o conteúdo
         </a>
+        <ScrollProgress />
         <Header />
         <main id="conteudo" className="flex-1">
           {children}

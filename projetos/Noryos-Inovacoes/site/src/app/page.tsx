@@ -220,7 +220,7 @@ export default function HomePage() {
             {porQueNoryos.map((item, i) => (
               <div
                 key={item.titulo}
-                data-anim="fade-up"
+                data-anim={i % 2 === 0 ? "fade-right" : "fade-left"}
                 style={staggerIndex(i)}
                 className="flex flex-col gap-3 bg-[var(--color-surface-1)] p-7"
               >

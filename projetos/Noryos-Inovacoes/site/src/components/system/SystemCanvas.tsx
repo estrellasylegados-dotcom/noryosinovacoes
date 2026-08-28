@@ -104,20 +104,24 @@ export function SystemCanvas({ faint = false }: { faint?: boolean }) {
                   className="draw-line"
                   style={{ "--len": len, "--draw-delay": `${i * 90}ms` } as CSSProperties}
                 />
-                {!faint && (
-                  <line
-                    x1={n1.x}
-                    y1={n1.y}
-                    x2={n2.x}
-                    y2={n2.y}
-                    stroke="var(--color-cyan)"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeDasharray={`3 ${len}`}
-                    className="flow-line"
-                    style={{ "--flow-len": len + 3, "--flow-delay": `${900 + i * 520}ms` } as CSSProperties}
-                  />
-                )}
+                <line
+                  x1={n1.x}
+                  y1={n1.y}
+                  x2={n2.x}
+                  y2={n2.y}
+                  stroke="var(--color-cyan)"
+                  strokeWidth={faint ? 1.4 : 1.8}
+                  strokeLinecap="round"
+                  strokeOpacity={faint ? 0.4 : 1}
+                  strokeDasharray={`3 ${len}`}
+                  className="flow-line"
+                  style={
+                    {
+                      "--flow-len": len + 3,
+                      "--flow-delay": `${900 + i * (faint ? 900 : 520)}ms`,
+                    } as CSSProperties
+                  }
+                />
               </g>
             );
           })}

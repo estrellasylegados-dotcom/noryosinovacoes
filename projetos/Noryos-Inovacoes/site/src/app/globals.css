@@ -243,10 +243,11 @@ main {
     clip-path var(--dur-4) var(--ease-premium) var(--anim-delay);
   will-change: opacity, transform;
 }
-[data-anim="fade-up"]   { opacity: 0; transform: translateY(32px); }
-[data-anim="fade"]      { opacity: 0; }
-[data-anim="fade-left"] { opacity: 0; transform: translateX(28px); }
-[data-anim="scale-in"]  { opacity: 0; transform: scale(0.965); }
+[data-anim="fade-up"]    { opacity: 0; transform: translateY(32px); }
+[data-anim="fade"]       { opacity: 0; }
+[data-anim="fade-left"]  { opacity: 0; transform: translateX(28px); }
+[data-anim="fade-right"] { opacity: 0; transform: translateX(-28px); }
+[data-anim="scale-in"]   { opacity: 0; transform: scale(0.965); }
 [data-anim="slide-reveal"] {
   opacity: 0;
   clip-path: inset(0 0 100% 0);
@@ -443,6 +444,52 @@ main {
   box-shadow: var(--elev-1);
 }
 
+/* Indicador de progresso de leitura — linha fina no topo (§21) ----------- */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 60;
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-green));
+  opacity: 0.9;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Troca de painel contextual (Noryos OS §12) — fade + slide curto -------- */
+@keyframes panel-swap {
+  from { opacity: 0; transform: translateX(10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.panel-swap {
+  animation: panel-swap var(--dur-2) var(--ease-premium);
+}
+
+/* Item de árvore com marcador lateral no hover/seleção (Noryos OS §13) --- */
+.tree-item {
+  position: relative;
+}
+.tree-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  height: 30px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-cyan);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--dur-1) var(--ease-premium);
+}
+@media (hover: hover) {
+  .tree-item:hover::before { transform: scaleY(1); }
+}
+.tree-item[data-selected="true"]::before { transform: scaleY(1); }
+
 /* Header --------------------------------------------------------------------- */
 .site-header {
   transition: background-color var(--dur-2) var(--ease-premium), border-color var(--dur-2) var(--ease-premium), backdrop-filter var(--dur-2) var(--ease-premium);
@@ -486,4 +533,8 @@ main {
   .fill-bar { transform: scaleX(1) !important; }
   .flow-line, .node-pulse { animation: none !important; }
   .spotlight-card:hover { transform: none !important; }
+  .panel-swap { animation: none !important; }
+  .rail-runner, .rail-runner-y, .ambient-drift, .ambient-float,
+  .sheen-track::after, .live-dot { animation: none !important; }
+  .scroll-progress { display: none; }
 }

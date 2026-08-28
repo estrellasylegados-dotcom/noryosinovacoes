@@ -197,6 +197,39 @@ export function useParallax<T extends HTMLElement = HTMLDivElement>(
   return [ref, offset];
 }
 
+/**
+ * Contador suave (§16 do briefing) — anima de 0 até `target` quando `active`
+ * fica true. easeOutCubic, ~1s, uma única vez. Em reduced-motion pula direto
+ * pro valor final. Retorna inteiro pronto pra render.
+ */
+export function useCountUp(target: number, active: boolean, duration = 1000): number {
+  const [value, setValue] = useState(0);
+  const done = useRef(false);
+
+  useEffect(() => {
+    if (!active || done.current) return;
+    done.current = true;
+
+    let raf = 0;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      raf = requestAnimationFrame(() => setValue(target));
+      return () => cancelAnimationFrame(raf);
+    }
+
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setValue(Math.round(eased * target));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [active, target, duration]);
+
+  return value;
+}
+
 /** Spotlight de card — grava --mx/--my no elemento sob o cursor. */
 export function useSpotlight<T extends HTMLElement = HTMLDivElement>(): RefObject<T | null> {
   const ref = useRef<T>(null);
