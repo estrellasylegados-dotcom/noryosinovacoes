@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { DiagnosticoForm } from "@/components/DiagnosticoForm";
+import { Reveal } from "@/components/ui/Reveal";
 
 export const metadata: Metadata = {
   title: "Diagnóstico Digital Noryos",
@@ -14,7 +15,7 @@ export default function DiagnosticoPage() {
   return (
     <section className="py-20">
       <Container className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-        <div>
+        <Reveal>
           <SectionLabel>Diagnóstico Digital Noryos</SectionLabel>
           <h1 className="text-3xl font-medium sm:text-4xl">
             Descubra onde sua operação digital pode melhorar.
@@ -27,7 +28,7 @@ export default function DiagnosticoPage() {
             Isso não gera um relatório automático — as respostas são analisadas e usadas pra te dar um retorno real
             sobre o que faz sentido priorizar, ou pra dizer com honestidade que ainda não é o momento certo.
           </p>
-        </div>
+        </Reveal>
         <DiagnosticoForm />
       </Container>
     </section>

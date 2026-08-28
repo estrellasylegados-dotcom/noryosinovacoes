@@ -3,6 +3,7 @@ import { Container } from "@/components/ui/Container";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ButtonLink } from "@/components/ui/Button";
 import { WhatsappCTA } from "@/components/WhatsappCTA";
+import { Reveal } from "@/components/ui/Reveal";
 import { servicos } from "@/content/servicos";
 import { breadcrumbJsonLd, jsonLdScript } from "@/lib/seo";
 import { siteConfig } from "@/lib/config";
@@ -41,10 +42,11 @@ export default function SolucoesPage() {
 
       <section className="py-16">
         <Container className="grid gap-6">
-          {servicos.map((servico) => (
-            <div
+          {servicos.map((servico, i) => (
+            <Reveal
               key={servico.slug}
-              className="grid gap-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-card)] p-8 md:grid-cols-[auto_1fr_auto] md:items-center"
+              delay={i * 70}
+              className="card-lift grid gap-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-card)] p-8 md:grid-cols-[auto_1fr_auto] md:items-center"
             >
               <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-cyan)] md:w-40">
                 {servico.tag}
@@ -60,7 +62,7 @@ export default function SolucoesPage() {
               ) : (
                 <WhatsappCTA variant="secondary">Perguntar sobre isso</WhatsappCTA>
               )}
-            </div>
+            </Reveal>
           ))}
         </Container>
       </section>

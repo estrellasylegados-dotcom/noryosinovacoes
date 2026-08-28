@@ -19,7 +19,7 @@ export function NoryosOSExplorer() {
         return (
           <div
             key={folder.nome}
-            className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] transition-colors hover:border-[var(--color-border-strong)]"
+            className="card-lift overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] hover:border-[var(--color-border-strong)]"
           >
             <button
               className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"

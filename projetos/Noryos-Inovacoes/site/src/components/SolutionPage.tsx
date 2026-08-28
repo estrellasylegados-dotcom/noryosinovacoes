@@ -2,6 +2,7 @@ import { Container } from "./ui/Container";
 import { SectionLabel } from "./ui/SectionLabel";
 import { WhatsappCTA } from "./WhatsappCTA";
 import { ButtonLink } from "./ui/Button";
+import { Reveal } from "./ui/Reveal";
 import type { SolucaoDetalhe } from "@/content/solucoes-detalhe";
 
 /**
@@ -25,26 +26,32 @@ export function SolutionPage({ data }: { data: SolucaoDetalhe }) {
 
       <section className="py-16">
         <Container className="grid gap-10 lg:grid-cols-2">
-          <div>
+          <Reveal>
             <h2 className="text-xl font-medium">O problema</h2>
             <p className="mt-3 text-[var(--color-text-muted)]">{data.problema}</p>
-          </div>
-          <div>
+          </Reveal>
+          <Reveal delay={80}>
             <h2 className="text-xl font-medium">A oportunidade</h2>
             <p className="mt-3 text-[var(--color-text-muted)]">{data.oportunidade}</p>
-          </div>
+          </Reveal>
         </Container>
       </section>
 
       <section className="border-y border-[var(--color-border)] bg-[var(--color-ink-secondary)] py-16">
         <Container>
-          <h2 className="max-w-2xl text-xl font-medium">{data.solucao}</h2>
+          <Reveal>
+            <h2 className="max-w-2xl text-xl font-medium">{data.solucao}</h2>
+          </Reveal>
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            {data.mecanismo.map((item) => (
-              <div key={item.titulo} className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-6">
+            {data.mecanismo.map((item, i) => (
+              <Reveal
+                key={item.titulo}
+                delay={i * 70}
+                className="card-lift rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-6"
+              >
                 <h3 className="font-medium">{item.titulo}</h3>
                 <p className="mt-2 text-sm text-[var(--color-text-muted)]">{item.descricao}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </Container>
@@ -76,11 +83,11 @@ export function SolutionPage({ data }: { data: SolucaoDetalhe }) {
         <Container className="max-w-2xl">
           <h2 className="text-xl font-medium">Objeções comuns</h2>
           <div className="mt-6 grid gap-6">
-            {data.objecoes.map((item) => (
-              <div key={item.pergunta}>
+            {data.objecoes.map((item, i) => (
+              <Reveal key={item.pergunta} delay={i * 50}>
                 <p className="font-medium">{item.pergunta}</p>
                 <p className="mt-1 text-sm text-[var(--color-text-muted)]">{item.resposta}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </Container>

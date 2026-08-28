@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Container } from "@/components/ui/Container";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { Reveal } from "@/components/ui/Reveal";
@@ -19,22 +20,36 @@ export default function HomePage() {
       <section className="tech-grid-bg relative overflow-hidden border-b border-[var(--color-border)] pb-20 pt-24 sm:pt-32">
         <Container className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <SectionLabel>Noryos Inovações</SectionLabel>
-            <h1 className="max-w-xl text-4xl font-medium leading-[1.08] sm:text-5xl lg:text-[3.4rem]">
+            <div className="hero-rise">
+              <SectionLabel>Noryos Inovações</SectionLabel>
+            </div>
+            <h1
+              className="hero-rise max-w-xl text-4xl font-medium leading-[1.08] sm:text-5xl lg:text-[3.4rem]"
+              style={{ "--rise-delay": "80ms" } as CSSProperties}
+            >
               Tecnologia que conecta estratégia, operação e crescimento.
             </h1>
-            <p className="mt-6 max-w-lg text-lg text-[var(--color-text-muted)]">
+            <p
+              className="hero-rise mt-6 max-w-lg text-lg text-[var(--color-text-muted)]"
+              style={{ "--rise-delay": "160ms" } as CSSProperties}
+            >
               A Noryos combina presença digital, aquisição e automação para construir operações mais organizadas,
               eficientes e preparadas para crescer.
             </p>
-            <div className="mt-9 flex flex-wrap gap-4">
+            <div
+              className="hero-rise mt-9 flex flex-wrap gap-4"
+              style={{ "--rise-delay": "240ms" } as CSSProperties}
+            >
               <WhatsappCTA>Conversar sobre meu projeto</WhatsappCTA>
               <ButtonLink href="/solucoes" variant="secondary">
                 Conhecer as soluções
               </ButtonLink>
             </div>
           </div>
-          <div className="relative mx-auto aspect-[4/3] w-full max-w-md">
+          <div
+            className="hero-rise relative mx-auto aspect-[4/3] w-full max-w-md"
+            style={{ "--rise-delay": "320ms" } as CSSProperties}
+          >
             <HeroSystemAnimation />
           </div>
         </Container>
@@ -54,10 +69,14 @@ export default function HomePage() {
                 "Anúncios desconectados",
                 "Leads espalhados",
                 "Processos manuais",
-              ].map((item) => (
-                <div key={item} className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 py-6 text-sm text-[var(--color-text-muted)]">
+              ].map((item, i) => (
+                <Reveal
+                  key={item}
+                  delay={i * 60}
+                  className="card-lift rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 py-6 text-sm text-[var(--color-text-muted)]"
+                >
                   {item}
-                </div>
+                </Reveal>
               ))}
             </div>
             <p className="mt-8 text-xl font-medium text-[var(--color-text)]">
@@ -83,15 +102,17 @@ export default function HomePage() {
             </div>
             <ol className="grid gap-3">
               {["Presença Digital", "Aquisição", "Relacionamento", "Automação", "Dados", "Evolução"].map((item, i) => (
-                <li
+                <Reveal
                   key={item}
-                  className="flex items-center gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] px-5 py-4"
+                  as="li"
+                  delay={i * 55}
+                  className="card-lift flex items-center gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] px-5 py-4"
                 >
                   <span className="font-[family-name:var(--font-display)] text-sm text-[var(--color-cyan)]">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="text-sm">{item}</span>
-                </li>
+                </Reveal>
               ))}
             </ol>
           </Reveal>
@@ -107,7 +128,7 @@ export default function HomePage() {
           </Reveal>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-            <Reveal className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-card)] p-8">
+            <Reveal className="card-lift rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-card)] p-8">
               <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-cyan)]">
                 {principal.tag}
               </span>
@@ -125,7 +146,7 @@ export default function HomePage() {
               {secundarios.map((servico) => (
                 <div
                   key={servico.slug}
-                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-6"
+                  className="card-lift rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-6"
                 >
                   <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-green)]">
                     {servico.tag}
@@ -192,20 +213,20 @@ export default function HomePage() {
             <SectionLabel>Como trabalhamos</SectionLabel>
             <h2 className="max-w-xl text-2xl font-medium sm:text-3xl">Um processo claro, do início ao acompanhamento.</h2>
           </Reveal>
-          <Reveal className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { n: "01", t: "Entendemos", d: "Conhecemos o negócio, processos e objetivos." },
               { n: "02", t: "Planejamos", d: "Definimos estratégia e solução." },
               { n: "03", t: "Construímos", d: "Desenvolvemos e implementamos." },
               { n: "04", t: "Acompanhamos", d: "Medimos resultados e buscamos melhorias." },
-            ].map((step) => (
-              <div key={step.n} className="border-t border-[var(--color-border-strong)] pt-6">
+            ].map((step, i) => (
+              <Reveal key={step.n} delay={i * 70} className="border-t border-[var(--color-border-strong)] pt-6">
                 <span className="font-[family-name:var(--font-display)] text-3xl text-[var(--color-cyan)]">{step.n}</span>
                 <h3 className="mt-3 font-medium">{step.t}</h3>
                 <p className="mt-2 text-sm text-[var(--color-text-muted)]">{step.d}</p>
-              </div>
+              </Reveal>
             ))}
-          </Reveal>
+          </div>
         </Container>
       </section>
 
@@ -244,23 +265,23 @@ export default function HomePage() {
             <SectionLabel>Por que Noryos</SectionLabel>
             <h2 className="max-w-xl text-2xl font-medium sm:text-3xl">Argumentos concretos, não adjetivos soltos.</h2>
           </Reveal>
-          <Reveal className="mt-12 grid gap-8 sm:grid-cols-2">
+          <div className="mt-12 grid gap-8 sm:grid-cols-2">
             {[
               { t: "Estratégia antes da ferramenta", d: "Primeiro entendemos o problema." },
               { t: "Estrutura antes da entrega", d: "Projetos são organizados para continuidade." },
               { t: "Integração", d: "Marketing, tecnologia e automação trabalhando juntos." },
               { t: "Visibilidade", d: "O cliente entende o que foi construído." },
               { t: "Evolução", d: "Soluções preparadas para crescer." },
-            ].map((item) => (
-              <div key={item.t} className="flex gap-4">
+            ].map((item, i) => (
+              <Reveal key={item.t} delay={i * 60} className="flex gap-4">
                 <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--color-green)]" aria-hidden />
                 <div>
                   <h3 className="font-medium">{item.t}</h3>
                   <p className="mt-1 text-sm text-[var(--color-text-muted)]">{item.d}</p>
                 </div>
-              </div>
+              </Reveal>
             ))}
-          </Reveal>
+          </div>
         </Container>
       </section>
 

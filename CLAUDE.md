@@ -9,6 +9,26 @@ final dessa página com as regras específicas do seu negócio.
 
 ---
 
+## Premissa obrigatória — testar toda implementação
+
+Toda e qualquer implementação ou mudança **deve ser testada antes de ser
+dada como concluída**, para evitar erro ou implementação incorreta. Sem
+exceção. Isso vale para código, conteúdo, config, automação e qualquer
+alteração de arquivo.
+
+- **Código / site:** rodar o que existir de verificação no projeto — no
+  mínimo `build` + `lint` (ex: `npm run build && npm run lint` no
+  `site/`), e o teste/preview relevante. Só reportar "pronto" depois que
+  passar.
+- **Se um teste falhar:** dizer explicitamente que falhou, colar a
+  saída, e corrigir a causa — nunca reportar como concluído.
+- **Se não for possível testar** (falta de ambiente, dependência, acesso):
+  avisar claramente que a mudança **não foi testada** e o que falta pra
+  validar. Não afirmar que está funcionando.
+- Ao concluir, informar o que foi testado e qual foi o resultado.
+
+---
+
 ## Contexto do negócio
 
 No início de toda conversa, ler os seguintes arquivos (quando existirem

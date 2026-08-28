@@ -32,6 +32,11 @@
 - Grid técnico sutil (linhas finas) em vez de gradiente ou blob
 - Nós/linhas conectados (SVG + CSS) representando "sistema em funcionamento" — nunca partícula aleatória genérica
 - Motion contido: microinterações em cards, scroll suave, `prefers-reduced-motion` sempre respeitado
+  - Padrão implementado no site (seguir nas próximas páginas): scroll-reveal com leve
+    stagger entre itens de uma mesma lista/grid (componente `ui/Reveal`, prop `delay`);
+    header ganha sombra/borda sutil depois de ~8px de rolagem (`.site-header[data-scrolled]`);
+    `hero-rise` (fade-up escalonado do hero no load); `.card-lift` (elevação de ~3px no
+    hover, só em dispositivos com mouse). Nada disso roda sob `prefers-reduced-motion`.
 - Hierarquia visual por prioridade comercial, não por estética — Presença Digital sempre aparece com mais peso que os demais serviços
 
 ## Elementos-chave

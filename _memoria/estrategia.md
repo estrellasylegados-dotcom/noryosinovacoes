@@ -6,7 +6,7 @@
 
 ## Fase
 
-Lançamento da Noryos Inovações — construindo a fundação digital (site institucional) antes de iniciar prospecção ativa.
+Lançamento da Noryos Inovações — código do site institucional já construído e testado (build + lint verdes); falta destravar as pendências humanas abaixo antes de publicar e iniciar prospecção ativa.
 
 ## Prioridade principal
 

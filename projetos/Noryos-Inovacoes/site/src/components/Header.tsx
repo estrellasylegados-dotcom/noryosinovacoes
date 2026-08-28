@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Container } from "./ui/Container";
 import { WhatsappCTA } from "./WhatsappCTA";
 import { navegacaoPrincipal } from "@/content/navegacao";
@@ -9,9 +9,20 @@ import { siteConfig } from "@/lib/config";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-ink)]/90 backdrop-blur-md">
+    <header
+      data-scrolled={scrolled}
+      className="site-header sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-ink)]/90 backdrop-blur-md"
+    >
       <Container className="flex h-18 items-center justify-between py-4">
         <Link href="/" className="font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight">
           {siteConfig.shortName}

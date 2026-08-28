@@ -119,16 +119,62 @@ h1, h2, h3, h4 {
 .reveal {
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
 }
 .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Entrada suave do hero no load — sem esperar scroll, só pra não "estalar"
+   na tela. Escalonado via --rise-delay inline. */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.hero-rise {
+  opacity: 0;
+  animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+/* Microinteração de card — elevação mínima no hover, nada de bounce. */
+.card-lift {
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+@media (hover: hover) {
+  .card-lift:hover {
+    transform: translateY(-3px);
+  }
+}
+
+/* Header ganha profundidade só depois que a página rola um pouco. */
+.site-header {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+}
+.site-header[data-scrolled="true"] {
+  border-color: var(--color-border-strong);
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.8);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+  .hero-rise {
+    opacity: 1;
+    animation: none;
+  }
+  .card-lift:hover {
+    transform: none;
   }
 }

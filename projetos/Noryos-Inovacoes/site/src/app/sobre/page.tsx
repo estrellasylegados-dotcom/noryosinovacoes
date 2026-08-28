@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { WhatsappCTA } from "@/components/WhatsappCTA";
+import { Reveal } from "@/components/ui/Reveal";
 
 export const metadata: Metadata = {
   title: "Sobre a Noryos",
@@ -26,7 +27,7 @@ export default function SobrePage() {
 
       <section className="py-16">
         <Container className="grid gap-10 max-w-3xl">
-          <div>
+          <Reveal>
             <h2 className="text-xl font-medium">Empresa nova. O jeito de trabalhar, não.</h2>
             <p className="mt-3 text-[var(--color-text-muted)]">
               A Noryos está começando agora — e isso é dito com transparência, sem case inflado ou depoimento
@@ -34,23 +35,23 @@ export default function SobrePage() {
               metodologia: o Noryos OS, a forma como cada projeto é estruturado, documentado e preparado para
               evoluir.
             </p>
-          </div>
-          <div>
+          </Reveal>
+          <Reveal delay={70}>
             <h2 className="text-xl font-medium">Por trás da Noryos</h2>
             <p className="mt-3 text-[var(--color-text-muted)]">
               A Noryos é conduzida por Rafael Viriato, responsável direto por cada projeto — sem repasse pra uma
               fila de atendentes diferentes a cada mês. Isso significa contato direto com quem está de fato tocando
               o seu projeto.
             </p>
-          </div>
-          <div>
+          </Reveal>
+          <Reveal delay={140}>
             <h2 className="text-xl font-medium">O que a Noryos não faz</h2>
             <p className="mt-3 text-[var(--color-text-muted)]">
               Não promete resultado milagroso, não usa cliente fictício como prova social e não empurra pacote
               fechado de serviços que a empresa não precisa. Cada solução entra na conversa quando faz sentido pra
               prioridade real do negócio.
             </p>
-          </div>
+          </Reveal>
         </Container>
       </section>
 
