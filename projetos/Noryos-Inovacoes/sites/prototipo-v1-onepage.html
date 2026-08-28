@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noryos Inovações — Marketing digital sem enrolação</title>
+<meta name="description" content="Site, conteúdo, anúncio e automação trabalhando juntos. A Noryos Inovações faz marketing digital pra pequena e média empresa que precisa vender, não impressionar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12140F;
+    --paper:#F5F1E8;
+    --accent:#2F6B4F;
+    --accent-light:#C8E6A0;
+    --text-on-ink:#F5F1E8;
+    --text-on-paper:#1B1D18;
+    --muted:#6B6F63;
+    --border:rgba(107,111,99,0.22);
+    --serif:'Fraunces', Georgia, serif;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:var(--sans);
+    background:var(--paper);
+    color:var(--text-on-paper);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{max-width:100%; display:block;}
+  a{color:inherit;}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 32px;}
+  h1,h2,h3{font-family:var(--serif); font-weight:500; letter-spacing:-0.01em;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(245,241,232,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav{display:flex; align-items:center; justify-content:space-between; padding:20px 32px;}
+  .logo{font-family:var(--serif); font-size:1.25rem; font-weight:600; letter-spacing:0.02em;}
+  .logo span{color:var(--accent);}
+  .nav-links{display:flex; gap:36px; list-style:none; font-size:0.94rem;}
+  .nav-links a{text-decoration:none; color:var(--text-on-paper); opacity:0.75; transition:opacity .15s;}
+  .nav-links a:hover{opacity:1;}
+  .nav-cta{
+    font-size:0.9rem; font-weight:600; text-decoration:none;
+    background:var(--accent); color:var(--text-on-ink);
+    padding:10px 20px; border-radius:6px; white-space:nowrap;
+    transition:background .15s;
+  }
+  .nav-cta:hover{background:#255840;}
+  .nav-toggle{display:none;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background:var(--ink); color:var(--text-on-ink);
+    padding:120px 0 100px;
+  }
+  .hero .eyebrow{
+    font-size:0.82rem; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--accent-light); font-weight:600; margin-bottom:24px; display:block;
+  }
+  .hero h1{
+    font-size:clamp(2.4rem, 5vw, 4.1rem);
+    line-height:1.08;
+    max-width:14ch;
+    margin-bottom:28px;
+  }
+  .hero .lead{
+    font-size:1.15rem; max-width:46ch; color:rgba(245,241,232,0.82);
+    margin-bottom:40px;
+  }
+  .hero-actions{display:flex; gap:16px; flex-wrap:wrap; align-items:center;}
+  .btn-primary{
+    background:var(--accent); color:var(--text-on-ink);
+    text-decoration:none; font-weight:600; font-size:0.98rem;
+    padding:15px 28px; border-radius:6px; display:inline-block;
+    transition:transform .15s, background .15s;
+  }
+  .btn-primary:hover{background:#255840; transform:translateY(-1px);}
+  .btn-ghost{
+    color:var(--text-on-ink); text-decoration:none; font-weight:500; font-size:0.98rem;
+    border-bottom:1px solid rgba(245,241,232,0.4); padding-bottom:2px;
+  }
+
+  /* ---------- SECTION generic ---------- */
+  section{padding:96px 0;}
+  .section-label{
+    font-size:0.82rem; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:600; margin-bottom:18px; display:block;
+  }
+
+  /* ---------- PROBLEMA (editorial, texto corrido) ---------- */
+  .problema h2{
+    font-size:clamp(1.8rem, 3.4vw, 2.6rem);
+    max-width:20ch; margin-bottom:36px;
+  }
+  .problema-grid{
+    display:grid; grid-template-columns:1.1fr 1fr; gap:64px; align-items:start;
+  }
+  .problema-list{list-style:none;}
+  .problema-list li{
+    padding:18px 0; border-top:1px solid var(--border);
+    font-size:1.02rem; color:var(--muted);
+  }
+  .problema-list li:last-child{border-bottom:1px solid var(--border);}
+  .problema-list strong{color:var(--text-on-paper); font-weight:600;}
+  .problema-punch{
+    font-family:var(--serif); font-size:1.4rem; font-weight:500;
+    line-height:1.4; color:var(--text-on-paper);
+  }
+
+  /* ---------- SERVIÇOS (assimétrico, sem 3 cards iguais) ---------- */
+  .servicos{background:var(--ink); color:var(--text-on-ink);}
+  .servicos h2{color:var(--text-on-ink); font-size:clamp(1.8rem,3.4vw,2.6rem); max-width:18ch; margin-bottom:56px;}
+  .servicos-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:0 72px;}
+  .servico-principal{border-top:1px solid rgba(245,241,232,0.18); padding-top:32px;}
+  .servico-principal .tag{
+    font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--accent-light); font-weight:600;
+  }
+  .servico-principal h3{font-size:1.9rem; margin:14px 0 18px; color:var(--text-on-ink);}
+  .servico-principal p{color:rgba(245,241,232,0.75); font-size:1.02rem; max-width:44ch;}
+  .servicos-lista{list-style:none; display:flex; flex-direction:column;}
+  .servicos-lista li{
+    border-top:1px solid rgba(245,241,232,0.18);
+    padding:22px 0;
+  }
+  .servicos-lista li:last-child{border-bottom:1px solid rgba(245,241,232,0.18);}
+  .servicos-lista h4{
+    font-family:var(--serif); font-weight:500; font-size:1.15rem; margin-bottom:6px;
+  }
+  .servicos-lista p{color:rgba(245,241,232,0.68); font-size:0.94rem;}
+
+  /* ---------- METODOLOGIA ---------- */
+  .metodologia h2{font-size:clamp(1.8rem,3.4vw,2.6rem); max-width:18ch; margin-bottom:20px;}
+  .metodologia > .wrap > p{color:var(--muted); max-width:56ch; margin-bottom:56px; font-size:1.02rem;}
+  .passos{display:grid; grid-template-columns:repeat(4,1fr); gap:0;}
+  .passo{border-top:1px solid var(--border); padding:28px 24px 0 0;}
+  .passo .num{
+    font-family:var(--serif); font-size:2.2rem; color:var(--accent); display:block; margin-bottom:12px;
+  }
+  .passo h4{font-size:1.05rem; font-weight:600; margin-bottom:8px; font-family:var(--sans);}
+  .passo p{font-size:0.92rem; color:var(--muted);}
+
+  /* ---------- SOBRE ---------- */
+  .sobre-grid{display:grid; grid-template-columns:0.9fr 1.1fr; gap:64px; align-items:center;}
+  .sobre h2{font-size:clamp(1.8rem,3.4vw,2.6rem); margin-bottom:24px;}
+  .sobre p{color:var(--muted); font-size:1.03rem; margin-bottom:18px; max-width:52ch;}
+  .sobre p strong{color:var(--text-on-paper);}
+  .sobre-marca{
+    background:var(--ink); color:var(--text-on-ink);
+    border-radius:8px; padding:48px 36px; text-align:left;
+  }
+  .sobre-marca .logo{font-size:1.6rem; margin-bottom:16px; display:block;}
+  .sobre-marca p{color:rgba(245,241,232,0.7); font-size:0.94rem; max-width:none; margin-bottom:0;}
+
+  /* ---------- CTA FINAL ---------- */
+  .cta-final{background:var(--accent); color:var(--text-on-ink); text-align:center;}
+  .cta-final h2{color:var(--text-on-ink); font-size:clamp(1.9rem,4vw,3rem); max-width:18ch; margin:0 auto 24px;}
+  .cta-final p{color:rgba(245,241,232,0.85); max-width:44ch; margin:0 auto 36px; font-size:1.05rem;}
+  .cta-final .btn-primary{background:var(--ink);}
+  .cta-final .btn-primary:hover{background:#000;}
+
+  /* ---------- FOOTER ---------- */
+  footer{padding:48px 0; border-top:1px solid var(--border);}
+  .footer-grid{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;}
+  .footer-grid .logo{font-size:1.05rem;}
+  footer .foot-links{list-style:none; display:flex; gap:28px; font-size:0.9rem; color:var(--muted);}
+  footer .foot-links a{text-decoration:none;}
+  footer .copy{font-size:0.85rem; color:var(--muted); width:100%; margin-top:24px;}
+
+  /* ---------- MOTION (restrained) ---------- */
+  .reveal{opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease;}
+  .reveal.is-visible{opacity:1; transform:translateY(0);}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:860px){
+    .nav-links{display:none;}
+    .problema-grid, .servicos-grid, .sobre-grid{grid-template-columns:1fr; gap:32px;}
+    .passos{grid-template-columns:1fr 1fr; row-gap:32px;}
+    .footer-grid .copy{margin-top:12px;}
+  }
+  @media (max-width:520px){
+    .wrap{padding:0 20px;}
+    .hero{padding:90px 0 72px;}
+    section{padding:72px 0;}
+    .passos{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="nav wrap">
+    <a href="#top" class="logo">noryos<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="#servicos">Serviços</a></li>
+      <li><a href="#metodologia">Como funciona</a></li>
+      <li><a href="#sobre">Sobre</a></li>
+    </ul>
+    <a class="nav-cta" href="#contato">Falar com a Noryos</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Noryos Inovações</span>
+      <h1>Marketing digital sem enrolação, pra empresa que precisa vender.</h1>
+      <p class="lead">Site, conteúdo, anúncio e automação trabalhando juntos — sem economês, sem prazo eterno, sem relatório que ninguém entende. A gente faz o combinado, você acompanha de perto.</p>
+      <div class="hero-actions">
+        <a href="#contato" class="btn-primary">Quero conversar sobre meu negócio</a>
+        <a href="#servicos" class="btn-ghost">Ver o que fazemos</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEMA -->
+  <section class="problema">
+    <div class="wrap reveal">
+      <span class="section-label">O ponto de partida</span>
+      <h2>Você já tentou marketing digital antes. Não foi bem, né?</h2>
+      <div class="problema-grid">
+        <ul class="problema-list">
+          <li><strong>Contratou um freelancer</strong> que fez um post bonito e sumiu no mês seguinte.</li>
+          <li><strong>Pagou uma agência</strong> que manda relatório com gráfico colorido e zero venda a mais.</li>
+          <li><strong>Fez um site</strong> que ficou lindo na tela do designer e invisível no Google.</li>
+          <li><strong>Testou anúncio</strong> sozinho, gastou o orçamento do mês em três dias, aprendeu do jeito caro.</li>
+        </ul>
+        <p class="problema-punch">O problema nunca foi falta de ferramenta. Foi falta de alguém que entendesse o seu negócio antes de abrir o gerenciador de anúncios.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVIÇOS -->
+  <section class="servicos" id="servicos">
+    <div class="wrap reveal">
+      <span class="section-label">O que a gente faz</span>
+      <h2>Cada peça separada. Ou tudo junto — funciona melhor assim.</h2>
+      <div class="servicos-grid">
+        <div class="servico-principal">
+          <span class="tag">Base de tudo</span>
+          <h3>Sites que vendem, não só decoram</h3>
+          <p>Um site rápido, claro, que explica o que sua empresa faz em cinco segundos e leva quem chegou até o contato — não uma vitrine bonita que ninguém sabe usar.</p>
+        </div>
+        <ul class="servicos-lista">
+          <li>
+            <h4>Tráfego pago</h4>
+            <p>Google e Meta Ads com meta clara: cliente novo, não "engajamento".</p>
+          </li>
+          <li>
+            <h4>Conteúdo e redes sociais</h4>
+            <p>Presença consistente, com a voz da sua empresa — não um template genérico repetido pra todo cliente.</p>
+          </li>
+          <li>
+            <h4>Automação</h4>
+            <p>Atendimento e funil que não deixam lead esperando resposta até o próximo dia útil.</p>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- METODOLOGIA -->
+  <section class="metodologia" id="metodologia">
+    <div class="wrap reveal">
+      <span class="section-label">Como funciona</span>
+      <h2>Sem fórmula mágica. Com processo que se ajusta.</h2>
+      <p>A gente não promete "10x de faturamento em 30 dias" — quem promete isso geralmente não entrega e você já deve ter ouvido essa antes. O que a gente garante é um processo claro, revisado com frequência, com você sabendo exatamente o que está sendo feito e por quê.</p>
+      <div class="passos">
+        <div class="passo">
+          <span class="num">01</span>
+          <h4>Diagnóstico</h4>
+          <p>Entendemos seu negócio, seu cliente e o que já foi tentado antes de sugerir qualquer coisa.</p>
+        </div>
+        <div class="passo">
+          <span class="num">02</span>
+          <h4>Plano</h4>
+          <p>Prioridade clara do que atacar primeiro — nem tudo precisa acontecer no mês 1.</p>
+        </div>
+        <div class="passo">
+          <span class="num">03</span>
+          <h4>Execução</h4>
+          <p>Site, conteúdo, anúncio e automação, entregues no ritmo combinado.</p>
+        </div>
+        <div class="passo">
+          <span class="num">04</span>
+          <h4>Ajuste</h4>
+          <p>Revisão constante com dado real — o que não funciona, muda.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOBRE -->
+  <section class="sobre" id="sobre">
+    <div class="wrap reveal">
+      <div class="sobre-grid">
+        <div class="sobre-marca">
+          <span class="logo">noryos<span style="color:var(--accent-light)">.</span></span>
+          <p>Inovações aplicadas ao dia a dia de quem toca uma empresa pequena ou média — sem precisar de departamento de marketing próprio.</p>
+        </div>
+        <div>
+          <span class="section-label">Sobre a Noryos</span>
+          <h2>Empresa nova. O jeito de trabalhar, não.</h2>
+          <p>A Noryos Inovações começa agora — e isso a gente fala de peito aberto, sem inventar case ou depoimento pra parecer maior do que é.</p>
+          <p>O que já não é novo é o compromisso por trás: <strong>fazer marketing que qualquer dono de empresa entende</strong>, sem economês, sem promessa vazia, com contato direto de quem está tocando o seu projeto — não um atendente diferente a cada mês.</p>
+          <p>Se você está procurando a agência mais antiga do mercado, provavelmente não é a gente ainda. Se está procurando alguém que vai tratar seu negócio como se fosse o próprio, é essa a conversa que queremos ter.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="cta-final" id="contato">
+    <div class="wrap reveal">
+      <h2>Bora conversar sobre o seu negócio?</h2>
+      <p>Sem discurso de vendas, sem compromisso. Conta o que já tentou e o que precisa dar certo — a gente responde com o que faz sentido pro seu caso, mesmo que seja "ainda não é a hora".</p>
+      <a href="mailto:contato@noryosinovacoes.com.br" class="btn-primary">contato@noryosinovacoes.com.br</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap footer-grid">
+    <a href="#top" class="logo">noryos<span style="color:var(--accent)">.</span></a>
+    <ul class="foot-links">
+      <li><a href="#servicos">Serviços</a></li>
+      <li><a href="#metodologia">Como funciona</a></li>
+      <li><a href="#sobre">Sobre</a></li>
+      <li><a href="mailto:contato@noryosinovacoes.com.br">Contato</a></li>
+    </ul>
+    <p class="copy">© 2026 Noryos Inovações — noryosinovacoes.com.br</p>
+  </div>
+</footer>
+
+<script>
+  // Motion contido: só confirma que a seção entrou na tela, nada decorativo.
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+/*
+  Design system — Noryos Inovações
+  Ver documentação completa em ../../identidade/design-guide.md (fora do app).
+  Qualquer valor de cor/espaçamento/radius usado nos componentes deve vir
+  daqui — nada de hex solto espalhado pelos componentes.
+*/
+@theme inline {
+  /* Cores */
+  --color-ink: #0b0d10;              /* fundo principal */
+  --color-ink-secondary: #111820;    /* fundo secundário / seções alternadas */
+  --color-card: #12171d;             /* fundo de cards */
+  --color-border: rgba(167, 176, 186, 0.14);
+  --color-border-strong: rgba(167, 176, 186, 0.28);
+  --color-text: #f5f7fa;             /* texto principal */
+  --color-text-muted: #a7b0ba;       /* texto secundário */
+  --color-cyan: #2dd4ff;             /* cor tecnológica principal */
+  --color-green: #43e6a6;            /* status / automação — uso moderado */
+
+  /* Tipografia */
+  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Sombras — discretas, sem glow */
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 24px -16px rgba(0, 0, 0, 0.6);
+  --shadow-elevated: 0 24px 48px -24px rgba(0, 0, 0, 0.7);
+
+  /* Container */
+  --container-max: 1200px;
+}
+
+@media (prefers-color-scheme: light) {
+  /* O produto é dark-first por decisão de marca (premium/tecnológico).
+     Não invertemos pra light mode — ver design-guide.md, seção Visual. */
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-text);
+  font-family: var(--font-sans), -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Foco visível — acessibilidade, nunca outline: none sem substituto */
+:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Utilitário de container padrão do design system */
+.container-noryos {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+@media (min-width: 640px) {
+  .container-noryos {
+    padding-inline: 32px;
+  }
+}
+
+/* Grid técnico sutil do hero — CSS puro, sem canvas/WebGL */
+.tech-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(167, 176, 186, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(167, 176, 186, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
