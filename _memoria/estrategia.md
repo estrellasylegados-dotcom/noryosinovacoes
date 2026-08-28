@@ -6,7 +6,7 @@
 
 ## Fase
 
-Lançamento da Noryos Inovações — código do site institucional já construído e testado (build + lint verdes); falta destravar as pendências humanas abaixo antes de publicar e iniciar prospecção ativa.
+Lançamento da Noryos Inovações — código do site institucional já construído e testado (build + lint verdes). Em 28/08/2026 passou por um redesign profundo da camada visual ("Digital Operating System": novo hero, tipografia, motion system, cards, Noryos OS Explorer, diagnóstico visual) — estratégia, SEO e arquitetura preservados. Ainda falta destravar as pendências humanas abaixo antes de publicar e iniciar prospecção ativa.
 
 ## Prioridade principal
 

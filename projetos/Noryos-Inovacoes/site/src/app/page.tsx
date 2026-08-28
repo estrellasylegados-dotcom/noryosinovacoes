@@ -1,337 +1,284 @@
 import type { CSSProperties } from "react";
 import { Container } from "@/components/ui/Container";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { Reveal } from "@/components/ui/Reveal";
 import { ButtonLink } from "@/components/ui/Button";
 import { WhatsappCTA } from "@/components/WhatsappCTA";
-import { HeroSystemAnimation } from "@/components/HeroSystemAnimation";
+import { SectionReveal, Stagger, Parallax } from "@/components/ui/motion";
+import { AnimatedHeading } from "@/components/ui/AnimatedHeading";
+import { staggerIndex } from "@/lib/motion";
+import { SystemCanvas } from "@/components/system/SystemCanvas";
+import { FragmentGrid } from "@/components/system/FragmentGrid";
+import { SystemFlow } from "@/components/system/SystemFlow";
+import { SolutionShowcase } from "@/components/SolutionShowcase";
 import { NoryosOSExplorer } from "@/components/NoryosOSExplorer";
+import { DiagnosticPreview } from "@/components/DiagnosticPreview";
+import { ProcessTimeline } from "@/components/ProcessTimeline";
+import { ApplicationScenarios } from "@/components/ApplicationScenarios";
+import { FinalCTA } from "@/components/FinalCTA";
 import { FaqAccordion } from "@/components/FaqAccordion";
-import { servicos } from "@/content/servicos";
+import { Icon } from "@/components/ui/Icon";
 import { faq } from "@/content/faq";
+import { porQueNoryos, modulosHero } from "@/content/home";
 import { faqJsonLd, jsonLdScript } from "@/lib/seo";
 
 export default function HomePage() {
-  const [principal, ...secundarios] = servicos;
-
   return (
     <>
-      {/* 1. HERO */}
-      <section className="tech-grid-bg relative overflow-hidden border-b border-[var(--color-border)] pb-20 pt-24 sm:pt-32">
-        <Container className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+      {/* 1 — HERO cinematográfico */}
+      <section className="hero-bleed tech-grid glow-cyan noise relative flex min-h-[100svh] items-center overflow-hidden border-b border-[var(--hairline)]">
+        <Container className="grid items-center gap-14 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:py-0">
           <div>
             <div className="hero-rise">
               <SectionLabel>Noryos Inovações</SectionLabel>
             </div>
-            <h1
-              className="hero-rise max-w-xl text-4xl font-medium leading-[1.08] sm:text-5xl lg:text-[3.4rem]"
-              style={{ "--rise-delay": "80ms" } as CSSProperties}
-            >
-              Tecnologia que conecta estratégia, operação e crescimento.
-            </h1>
+            <AnimatedHeading
+              as="h1"
+              className="t-display max-w-[16ch]"
+              lines={["Tecnologia que conecta", "estratégia, operação", "e crescimento."]}
+              accent="crescimento"
+            />
             <p
-              className="hero-rise mt-6 max-w-lg text-lg text-[var(--color-text-muted)]"
-              style={{ "--rise-delay": "160ms" } as CSSProperties}
+              className="hero-rise t-lead mt-7 max-w-lg"
+              style={{ "--rise-delay": "220ms" } as CSSProperties}
             >
               A Noryos combina presença digital, aquisição e automação para construir operações mais organizadas,
               eficientes e preparadas para crescer.
             </p>
             <div
               className="hero-rise mt-9 flex flex-wrap gap-4"
-              style={{ "--rise-delay": "240ms" } as CSSProperties}
+              style={{ "--rise-delay": "320ms" } as CSSProperties}
             >
               <WhatsappCTA>Conversar sobre meu projeto</WhatsappCTA>
-              <ButtonLink href="/solucoes" variant="secondary">
+              <ButtonLink href="/solucoes" variant="secondary" withArrow>
                 Conhecer as soluções
               </ButtonLink>
             </div>
-          </div>
-          <div
-            className="hero-rise relative mx-auto aspect-[4/3] w-full max-w-md"
-            style={{ "--rise-delay": "320ms" } as CSSProperties}
-          >
-            <HeroSystemAnimation />
-          </div>
-        </Container>
-      </section>
-
-      {/* 2. PROBLEMA */}
-      <section className="py-24">
-        <Container>
-          <Reveal>
-            <SectionLabel>O ponto de partida</SectionLabel>
-            <h2 className="max-w-2xl text-2xl font-medium sm:text-3xl">
-              Operação digital fragmentada custa mais caro do que parece.
-            </h2>
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                "Site sem estratégia",
-                "Anúncios desconectados",
-                "Leads espalhados",
-                "Processos manuais",
-              ].map((item, i) => (
-                <Reveal
-                  key={item}
-                  delay={i * 60}
-                  className="card-lift rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 py-6 text-sm text-[var(--color-text-muted)]"
-                >
-                  {item}
-                </Reveal>
+            <div
+              className="hero-rise mt-10 flex flex-wrap gap-x-3 gap-y-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--color-text-dim)]"
+              style={{ "--rise-delay": "400ms" } as CSSProperties}
+            >
+              {modulosHero.map((m, i) => (
+                <span key={m} className="flex items-center gap-3">
+                  {i > 0 && <span className="text-[var(--color-text-dim)]/50">/</span>}
+                  {m}
+                </span>
               ))}
             </div>
-            <p className="mt-8 text-xl font-medium text-[var(--color-text)]">
-              A soma disso é sempre a mesma: mais esforço, menos controle.
-            </p>
-            <p className="mt-3 text-[var(--color-text-muted)]">A Noryos conecta essas partes.</p>
-          </Reveal>
+          </div>
+
+          <div
+            className="hero-rise relative mx-auto aspect-square w-full max-w-[440px] lg:max-w-none"
+            style={{ "--rise-delay": "180ms" } as CSSProperties}
+          >
+            <Parallax strength={26}>
+              <SystemCanvas />
+            </Parallax>
+          </div>
         </Container>
       </section>
 
-      {/* 3. NOVA POSSIBILIDADE */}
-      <section className="border-y border-[var(--color-border)] bg-[var(--color-ink-secondary)] py-24">
+      {/* 2 — FRAGMENTAÇÃO */}
+      <section className="section">
         <Container>
-          <Reveal className="grid items-center gap-12 lg:grid-cols-2">
-            <div>
+          <SectionReveal className="max-w-2xl">
+            <SectionLabel>O ponto de partida</SectionLabel>
+            <AnimatedHeading
+              className="t-h2"
+              lines={["Operação digital fragmentada", "custa mais caro do que parece."]}
+            />
+          </SectionReveal>
+
+          <div className="mt-14">
+            <FragmentGrid />
+          </div>
+
+          <SectionReveal className="mt-12 max-w-xl" delay={60}>
+            <p className="text-[var(--color-text)]">
+              Quando cada parte trabalha isoladamente, crescer exige mais esforço — e sobra menos controle.
+            </p>
+            <p className="mt-3 t-lead">A Noryos conecta essas partes.</p>
+          </SectionReveal>
+        </Container>
+      </section>
+
+      {/* 3 — OPERAÇÃO COMO SISTEMA */}
+      <section className="section surface-1 border-y border-[var(--hairline)]">
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-16">
+            <SectionReveal>
               <SectionLabel>Uma forma diferente de olhar pra isso</SectionLabel>
-              <h2 className="text-2xl font-medium sm:text-3xl">A operação digital pode funcionar como sistema.</h2>
-              <p className="mt-5 max-w-md text-[var(--color-text-muted)]">
+              <AnimatedHeading className="t-h2" lines={["A operação digital pode", "funcionar como sistema."]} />
+              <p className="mt-5 max-w-md t-lead">
                 Em vez de contratar peças soltas — um site aqui, um anúncio ali — a Noryos estrutura presença,
                 aquisição e automação como partes conectadas de uma mesma operação, com dado real orientando cada
                 ajuste.
               </p>
-            </div>
-            <ol className="grid gap-3">
-              {["Presença Digital", "Aquisição", "Relacionamento", "Automação", "Dados", "Evolução"].map((item, i) => (
-                <Reveal
-                  key={item}
-                  as="li"
-                  delay={i * 55}
-                  className="card-lift flex items-center gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] px-5 py-4"
-                >
-                  <span className="font-[family-name:var(--font-display)] text-sm text-[var(--color-cyan)]">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="text-sm">{item}</span>
-                </Reveal>
-              ))}
-            </ol>
-          </Reveal>
-        </Container>
-      </section>
-
-      {/* 4. SOLUÇÕES */}
-      <section id="solucoes" className="py-24">
-        <Container>
-          <Reveal>
-            <SectionLabel>O que a Noryos entrega</SectionLabel>
-            <h2 className="max-w-xl text-2xl font-medium sm:text-3xl">Soluções para diferentes etapas do seu negócio</h2>
-          </Reveal>
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-            <Reveal className="card-lift rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-card)] p-8">
-              <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-cyan)]">
-                {principal.tag}
-              </span>
-              <h3 className="mt-3 text-2xl font-medium">{principal.titulo}</h3>
-              <p className="mt-4 text-[var(--color-text-muted)]">{principal.problema}</p>
-              <p className="mt-4 text-[var(--color-text)]">{principal.solucao}</p>
-              {principal.href && (
-                <ButtonLink href={principal.href} variant="secondary" className="mt-6">
-                  Ver Presença Digital
-                </ButtonLink>
-              )}
-            </Reveal>
-
-            <Reveal className="flex flex-col gap-4">
-              {secundarios.map((servico) => (
-                <div
-                  key={servico.slug}
-                  className="card-lift rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-6"
-                >
-                  <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-green)]">
-                    {servico.tag}
-                  </span>
-                  <h4 className="mt-2 font-medium">{servico.titulo}</h4>
-                  <p className="mt-2 text-sm text-[var(--color-text-muted)]">{servico.beneficio}</p>
-                  {servico.href && (
-                    <ButtonLink href={servico.href} variant="ghost" className="mt-3 !px-0 !py-0">
-                      Ver solução →
-                    </ButtonLink>
-                  )}
-                </div>
-              ))}
-            </Reveal>
+            </SectionReveal>
+            <SectionReveal delay={100}>
+              <SystemFlow />
+            </SectionReveal>
           </div>
         </Container>
       </section>
 
-      {/* 5. DIAGNÓSTICO NA HOME */}
-      <section className="border-y border-[var(--color-border)] bg-[var(--color-ink-secondary)] py-24">
-        <Container className="grid items-center gap-10 lg:grid-cols-[1fr_auto]">
-          <Reveal>
-            <SectionLabel>Diagnóstico Digital Noryos</SectionLabel>
-            <h2 className="max-w-lg text-2xl font-medium sm:text-3xl">
-              Descubra onde sua operação digital pode melhorar.
-            </h2>
-            <p className="mt-4 max-w-lg text-[var(--color-text-muted)]">
-              Uma avaliação inicial sobre site, mobile, presença no Google, conversão, WhatsApp, aquisição e
-              automação — pra entender com clareza onde faz sentido investir primeiro.
-            </p>
-          </Reveal>
-          <Reveal>
-            <ButtonLink href="/diagnostico" variant="primary">
-              Solicitar meu diagnóstico
-            </ButtonLink>
-          </Reveal>
+      {/* 4 — SOLUÇÕES */}
+      <section id="solucoes" className="section-impact scroll-mt-24">
+        <Container className="container-wide">
+          <SectionReveal className="max-w-xl">
+            <SectionLabel>O que a Noryos entrega</SectionLabel>
+            <AnimatedHeading className="t-h2" lines={["Soluções para diferentes", "etapas do seu negócio"]} />
+          </SectionReveal>
+          <div className="mt-14">
+            <SolutionShowcase />
+          </div>
         </Container>
       </section>
 
-      {/* 6. NORYOS OS */}
-      <section className="py-24">
-        <Container className="grid gap-12 lg:grid-cols-2 lg:items-start">
-          <Reveal>
+      {/* 5 — NORYOS OS */}
+      <section id="noryos-os" className="section-impact surface-1 border-y border-[var(--hairline)] scroll-mt-24">
+        <Container className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-16">
+          <SectionReveal>
             <SectionLabel>A metodologia por trás</SectionLabel>
-            <h2 className="text-2xl font-medium sm:text-3xl">Seu projeto não fica solto. Ele nasce organizado.</h2>
-            <p className="mt-5 max-w-md text-[var(--color-text-muted)]">
+            <AnimatedHeading className="t-h2" lines={["Seu projeto não fica solto.", "Ele nasce organizado."]} />
+            <p className="mt-5 max-w-md t-lead">
               O Noryos OS é a forma como cada projeto é estruturado — uma base pensada pra durar, com continuidade
               entre presença digital, aquisição, conteúdo, automações, dados e documentação.
             </p>
             <p className="mt-4 max-w-md text-sm text-[var(--color-text-muted)]">
-              Clique nas categorias ao lado pra ver o que cada uma organiza.
+              Navegue pelas categorias ao lado pra ver o que cada uma organiza.
             </p>
-          </Reveal>
-          <Reveal>
-            <NoryosOSExplorer />
-          </Reveal>
+          </SectionReveal>
+          <SectionReveal anim="fade-left" delay={80}>
+            <Parallax strength={18}>
+              <NoryosOSExplorer />
+            </Parallax>
+          </SectionReveal>
         </Container>
       </section>
 
-      {/* 7. COMO TRABALHAMOS */}
-      <section className="border-y border-[var(--color-border)] bg-[var(--color-ink-secondary)] py-24">
+      {/* 6 — DIAGNÓSTICO DIGITAL */}
+      <section id="diagnostico" className="section scroll-mt-24">
+        <Container className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:items-center lg:gap-16">
+          <SectionReveal>
+            <SectionLabel>Diagnóstico Digital Noryos</SectionLabel>
+            <AnimatedHeading className="t-h2" lines={["Descubra onde sua operação", "digital pode melhorar."]} />
+            <p className="mt-5 max-w-md t-lead">
+              Uma avaliação inicial sobre site, mobile, presença no Google, conversão, WhatsApp, aquisição e
+              automação — pra entender com clareza onde faz sentido investir primeiro.
+            </p>
+            <p className="mt-4 max-w-md text-sm text-[var(--color-text-muted)]">
+              O retorno é analisado por uma pessoa, não gerado automaticamente. O painel ao lado é só uma
+              demonstração do formato.
+            </p>
+          </SectionReveal>
+          <SectionReveal anim="fade-left" delay={80}>
+            <Parallax strength={16}>
+              <DiagnosticPreview />
+            </Parallax>
+          </SectionReveal>
+        </Container>
+      </section>
+
+      {/* 7 — COMO TRABALHAMOS */}
+      <section id="processo" className="section surface-1 border-y border-[var(--hairline)] scroll-mt-24">
         <Container>
-          <Reveal>
+          <SectionReveal className="max-w-xl">
             <SectionLabel>Como trabalhamos</SectionLabel>
-            <h2 className="max-w-xl text-2xl font-medium sm:text-3xl">Um processo claro, do início ao acompanhamento.</h2>
-          </Reveal>
-          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { n: "01", t: "Entendemos", d: "Conhecemos o negócio, processos e objetivos." },
-              { n: "02", t: "Planejamos", d: "Definimos estratégia e solução." },
-              { n: "03", t: "Construímos", d: "Desenvolvemos e implementamos." },
-              { n: "04", t: "Acompanhamos", d: "Medimos resultados e buscamos melhorias." },
-            ].map((step, i) => (
-              <Reveal key={step.n} delay={i * 70} className="border-t border-[var(--color-border-strong)] pt-6">
-                <span className="font-[family-name:var(--font-display)] text-3xl text-[var(--color-cyan)]">{step.n}</span>
-                <h3 className="mt-3 font-medium">{step.t}</h3>
-                <p className="mt-2 text-sm text-[var(--color-text-muted)]">{step.d}</p>
-              </Reveal>
-            ))}
+            <AnimatedHeading className="t-h2" lines={["Um processo claro, do", "início ao acompanhamento."]} />
+          </SectionReveal>
+          <div className="mt-6">
+            <ProcessTimeline />
           </div>
         </Container>
       </section>
 
-      {/* 8. DEMONSTRAÇÕES */}
-      <section className="py-24">
+      {/* 8 — CENÁRIOS DEMONSTRATIVOS */}
+      <section className="section">
         <Container>
-          <Reveal>
-            <SectionLabel>Cenário demonstrativo</SectionLabel>
-            <h2 className="max-w-xl text-2xl font-medium sm:text-3xl">Como a metodologia se aplicaria na prática</h2>
-            <p className="mt-3 max-w-xl text-sm text-[var(--color-text-muted)]">
-              A Noryos ainda não tem cases reais publicados — este é um cenário hipotético pra ilustrar como o
-              processo funciona, não um resultado obtido.
+          <SectionReveal className="max-w-xl">
+            <SectionLabel>Cenários demonstrativos</SectionLabel>
+            <AnimatedHeading className="t-h2" lines={["Como as soluções podem", "funcionar na prática"]} />
+            <p className="mt-4 max-w-xl text-sm text-[var(--color-text-muted)]">
+              A Noryos ainda não tem cases reais publicados. Os fluxos abaixo são exemplos de aplicação pra ilustrar
+              o método — não resultados obtidos.
             </p>
-          </Reveal>
+          </SectionReveal>
+          <div className="mt-10">
+            <ApplicationScenarios />
+          </div>
+        </Container>
+      </section>
 
-          <Reveal className="mt-10 grid gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-4">
-            {[
-              { t: "Situação", d: "Prestador de serviço local com site antigo, sem experiência mobile e sem canal claro de contato." },
-              { t: "Solução", d: "Novo site orientado à conversão, WhatsApp centralizado e Google Business Profile otimizado." },
-              { t: "Estrutura", d: "Presença digital + automação de atendimento organizadas dentro do Noryos OS do projeto." },
-              { t: "Resultado esperado", d: "Mais visitantes concluindo contato, com resposta mais rápida via automação — a validar com dado real." },
-            ].map((card) => (
-              <div key={card.t} className="bg-[var(--color-ink)] p-6">
-                <h3 className="font-medium">{card.t}</h3>
-                <p className="mt-2 text-sm text-[var(--color-text-muted)]">{card.d}</p>
+      {/* 9 — POR QUE NORYOS */}
+      <section className="section surface-1 border-y border-[var(--hairline)]">
+        <Container>
+          <SectionReveal className="max-w-xl">
+            <SectionLabel>Por que Noryos</SectionLabel>
+            <AnimatedHeading className="t-h2" lines={["Argumentos concretos,", "não adjetivos soltos."]} />
+          </SectionReveal>
+          <Stagger className="mt-12 grid gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--hairline)] sm:grid-cols-2 lg:grid-cols-3">
+            {porQueNoryos.map((item, i) => (
+              <div
+                key={item.titulo}
+                data-anim="fade-up"
+                style={staggerIndex(i)}
+                className="flex flex-col gap-3 bg-[var(--color-surface-1)] p-7"
+              >
+                <span className="t-mono text-sm text-[var(--color-cyan)]">{String(i + 1).padStart(2, "0")}</span>
+                <h3 className="t-h3 text-[1.05rem]">{item.titulo}</h3>
+                <p className="text-sm text-[var(--color-text-muted)]">{item.descricao}</p>
               </div>
             ))}
-          </Reveal>
+          </Stagger>
         </Container>
       </section>
 
-      {/* 9. POR QUE NORYOS */}
-      <section className="border-y border-[var(--color-border)] bg-[var(--color-ink-secondary)] py-24">
+      {/* 10 — CREDIBILIDADE */}
+      <section className="section">
         <Container>
-          <Reveal>
-            <SectionLabel>Por que Noryos</SectionLabel>
-            <h2 className="max-w-xl text-2xl font-medium sm:text-3xl">Argumentos concretos, não adjetivos soltos.</h2>
-          </Reveal>
-          <div className="mt-12 grid gap-8 sm:grid-cols-2">
-            {[
-              { t: "Estratégia antes da ferramenta", d: "Primeiro entendemos o problema." },
-              { t: "Estrutura antes da entrega", d: "Projetos são organizados para continuidade." },
-              { t: "Integração", d: "Marketing, tecnologia e automação trabalhando juntos." },
-              { t: "Visibilidade", d: "O cliente entende o que foi construído." },
-              { t: "Evolução", d: "Soluções preparadas para crescer." },
-            ].map((item, i) => (
-              <Reveal key={item.t} delay={i * 60} className="flex gap-4">
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--color-green)]" aria-hidden />
-                <div>
-                  <h3 className="font-medium">{item.t}</h3>
-                  <p className="mt-1 text-sm text-[var(--color-text-muted)]">{item.d}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      {/* 10. PROVA / CREDIBILIDADE */}
-      <section className="py-24">
-        <Container>
-          <Reveal>
+          <SectionReveal className="max-w-3xl">
             <SectionLabel>Credibilidade</SectionLabel>
-            <h2 className="max-w-2xl text-2xl font-medium sm:text-3xl">
-              A Noryos é nova. Isso a gente fala com transparência, sem inventar case pra parecer maior do que é.
+            <h2 className="t-h2">
+              A Noryos é nova — e isso é dito com transparência, sem inventar case pra parecer maior do que é.
             </h2>
-            <p className="mt-5 max-w-2xl text-[var(--color-text-muted)]">
+            <p className="mt-5 t-lead">
               O que sustenta a credibilidade aqui é o que dá pra verificar agora: o processo, a metodologia do
-              Noryos OS, a forma como cada projeto é documentado, e a transparência sobre o que ainda está em
+              Noryos OS, a forma como cada projeto é documentado, e a honestidade sobre o que ainda está em
               construção.
             </p>
-          </Reveal>
+          </SectionReveal>
+          <Stagger className="mt-10 flex flex-wrap gap-3">
+            {["Metodologia", "Execução", "Interfaces", "Documentação", "Transparência"].map((t, i) => (
+              <span
+                key={t}
+                data-anim="fade-up"
+                style={staggerIndex(i)}
+                className="flex items-center gap-2 rounded-full border border-[var(--hairline-strong)] bg-[var(--color-surface-2)] px-3.5 py-2 text-sm text-[var(--color-text-muted)]"
+              >
+                <Icon name="check" size={14} className="text-[var(--color-green)]" />
+                {t}
+              </span>
+            ))}
+          </Stagger>
         </Container>
       </section>
 
-      {/* 11. FAQ */}
-      <section className="border-t border-[var(--color-border)] py-24">
+      {/* 11 — FAQ */}
+      <section className="section surface-1 border-t border-[var(--hairline)]">
         <Container className="max-w-3xl">
-          <Reveal>
+          <SectionReveal>
             <SectionLabel>Perguntas frequentes</SectionLabel>
-            <h2 className="text-2xl font-medium sm:text-3xl">Antes de conversar, talvez isso já responda</h2>
-          </Reveal>
-          <Reveal className="mt-10">
+            <AnimatedHeading className="t-h2" lines={["Antes de conversar,", "talvez isso já responda"]} />
+          </SectionReveal>
+          <SectionReveal className="mt-10" delay={60}>
             <FaqAccordion items={faq} />
-          </Reveal>
+          </SectionReveal>
         </Container>
         <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(faqJsonLd(faq))} />
       </section>
 
-      {/* 12. CTA FINAL */}
-      <section className="border-t border-[var(--color-border)] bg-[var(--color-ink-secondary)] py-24 text-center">
-        <Container className="max-w-2xl">
-          <Reveal>
-            <h2 className="text-3xl font-medium sm:text-4xl">
-              Conte para nós o que hoje está impedindo sua operação digital de avançar.
-            </h2>
-            <p className="mt-5 text-[var(--color-text-muted)]">
-              Primeiro entendemos o cenário. Depois avaliamos como podemos ajudar.
-            </p>
-            <div className="mt-8 flex justify-center">
-              <WhatsappCTA>Conversar sobre meu projeto</WhatsappCTA>
-            </div>
-          </Reveal>
-        </Container>
-      </section>
+      {/* 12 — CTA FINAL */}
+      <FinalCTA />
     </>
   );
 }

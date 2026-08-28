@@ -2,7 +2,9 @@ import { Container } from "./ui/Container";
 import { SectionLabel } from "./ui/SectionLabel";
 import { WhatsappCTA } from "./WhatsappCTA";
 import { ButtonLink } from "./ui/Button";
-import { Reveal } from "./ui/Reveal";
+import { SectionReveal, Stagger } from "./ui/motion";
+import { SpotlightCard } from "./ui/SpotlightCard";
+import { staggerIndex } from "@/lib/motion";
 import type { SolucaoDetalhe } from "@/content/solucoes-detalhe";
 
 /**
@@ -13,65 +15,63 @@ import type { SolucaoDetalhe } from "@/content/solucoes-detalhe";
 export function SolutionPage({ data }: { data: SolucaoDetalhe }) {
   return (
     <>
-      <section className="border-b border-[var(--color-border)] py-20">
+      <section className="hero-bleed tech-grid glow-cyan relative overflow-hidden border-b border-[var(--hairline)] pb-16 pt-[calc(var(--header-h)+72px)]">
         <Container>
           <SectionLabel>{data.nome}</SectionLabel>
-          <h1 className="max-w-2xl text-3xl font-medium sm:text-4xl">{data.titulo}</h1>
-          <p className="mt-5 max-w-2xl text-[var(--color-text-muted)]">{data.subtitulo}</p>
+          <h1 className="t-display max-w-3xl text-[clamp(2.25rem,1.6rem+2.6vw,3.4rem)]">{data.titulo}</h1>
+          <p className="mt-6 max-w-2xl t-lead">{data.subtitulo}</p>
           <div className="mt-8">
             <WhatsappCTA>Solicitar diagnóstico</WhatsappCTA>
           </div>
         </Container>
       </section>
 
-      <section className="py-16">
-        <Container className="grid gap-10 lg:grid-cols-2">
-          <Reveal>
-            <h2 className="text-xl font-medium">O problema</h2>
+      <section className="section">
+        <Container className="grid gap-10 lg:grid-cols-2 lg:gap-16">
+          <SectionReveal>
+            <h2 className="t-h3">O problema</h2>
             <p className="mt-3 text-[var(--color-text-muted)]">{data.problema}</p>
-          </Reveal>
-          <Reveal delay={80}>
-            <h2 className="text-xl font-medium">A oportunidade</h2>
+          </SectionReveal>
+          <SectionReveal delay={80}>
+            <h2 className="t-h3">A oportunidade</h2>
             <p className="mt-3 text-[var(--color-text-muted)]">{data.oportunidade}</p>
-          </Reveal>
+          </SectionReveal>
         </Container>
       </section>
 
-      <section className="border-y border-[var(--color-border)] bg-[var(--color-ink-secondary)] py-16">
+      <section className="section surface-1 border-y border-[var(--hairline)]">
         <Container>
-          <Reveal>
-            <h2 className="max-w-2xl text-xl font-medium">{data.solucao}</h2>
-          </Reveal>
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+          <SectionReveal>
+            <h2 className="max-w-2xl t-h3">{data.solucao}</h2>
+          </SectionReveal>
+          <Stagger className="mt-10 grid gap-4 sm:grid-cols-3">
             {data.mecanismo.map((item, i) => (
-              <Reveal
-                key={item.titulo}
-                delay={i * 70}
-                className="card-lift rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-6"
-              >
-                <h3 className="font-medium">{item.titulo}</h3>
-                <p className="mt-2 text-sm text-[var(--color-text-muted)]">{item.descricao}</p>
-              </Reveal>
+              <SpotlightCard key={item.titulo} className="p-6">
+                <div data-anim="fade-up" style={staggerIndex(i)}>
+                  <h3 className="font-medium tracking-tight">{item.titulo}</h3>
+                  <p className="mt-2 text-sm text-[var(--color-text-muted)]">{item.descricao}</p>
+                </div>
+              </SpotlightCard>
             ))}
-          </div>
+          </Stagger>
         </Container>
       </section>
 
-      <section className="py-16">
+      <section className="section">
         <Container>
           <SectionLabel>Cenário demonstrativo</SectionLabel>
           <p className="mb-8 max-w-xl text-sm text-[var(--color-text-muted)]">
             Hipotético, pra ilustrar o processo — não um case real nem um resultado obtido.
           </p>
-          <div className="grid gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-4">
+          <div className="grid gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--hairline)] sm:grid-cols-4">
             {[
               { t: "Situação", d: data.demonstracao.situacao },
               { t: "Solução", d: data.demonstracao.solucao },
               { t: "Estrutura", d: data.demonstracao.estrutura },
               { t: "Resultado esperado", d: data.demonstracao.resultadoEsperado },
             ].map((card) => (
-              <div key={card.t} className="bg-[var(--color-ink)] p-6">
-                <h3 className="font-medium">{card.t}</h3>
+              <div key={card.t} className="bg-[var(--color-surface-1)] p-6">
+                <h3 className="font-medium tracking-tight">{card.t}</h3>
                 <p className="mt-2 text-sm text-[var(--color-text-muted)]">{card.d}</p>
               </div>
             ))}
@@ -79,26 +79,26 @@ export function SolutionPage({ data }: { data: SolucaoDetalhe }) {
         </Container>
       </section>
 
-      <section className="border-t border-[var(--color-border)] py-16">
+      <section className="section surface-1 border-y border-[var(--hairline)]">
         <Container className="max-w-2xl">
-          <h2 className="text-xl font-medium">Objeções comuns</h2>
+          <h2 className="t-h3">Objeções comuns</h2>
           <div className="mt-6 grid gap-6">
             {data.objecoes.map((item, i) => (
-              <Reveal key={item.pergunta} delay={i * 50}>
-                <p className="font-medium">{item.pergunta}</p>
+              <SectionReveal key={item.pergunta} delay={i * 50}>
+                <p className="font-medium tracking-tight">{item.pergunta}</p>
                 <p className="mt-1 text-sm text-[var(--color-text-muted)]">{item.resposta}</p>
-              </Reveal>
+              </SectionReveal>
             ))}
           </div>
         </Container>
       </section>
 
-      <section className="border-t border-[var(--color-border)] bg-[var(--color-ink-secondary)] py-20 text-center">
+      <section className="section-impact text-center">
         <Container className="max-w-xl">
-          <h2 className="text-2xl font-medium">Vamos ver se {data.nome.toLowerCase()} faz sentido pro seu momento?</h2>
-          <div className="mt-6 flex flex-wrap justify-center gap-4">
+          <h2 className="t-h2">Vamos ver se {data.nome.toLowerCase()} faz sentido pro seu momento?</h2>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
             <WhatsappCTA>Conversar sobre meu projeto</WhatsappCTA>
-            <ButtonLink href="/diagnostico" variant="secondary">
+            <ButtonLink href="/diagnostico" variant="secondary" withArrow>
               Solicitar diagnóstico
             </ButtonLink>
           </div>

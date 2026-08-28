@@ -9,7 +9,10 @@ o Diagnóstico Digital Noryos, e apresenta a metodologia Noryos OS. Ver
 - **Next.js 16** (App Router) + **TypeScript** + **Tailwind CSS v4**
 - **Zod** — validação do formulário de diagnóstico
 - **@supabase/supabase-js** — persistência do diagnóstico (opcional nesta fase)
-- Sem Framer Motion de propósito — animações via CSS + `IntersectionObserver` mínimo
+- **Fontes** (`next/font/google`): Manrope (display) + Inter (corpo) + Geist Mono (rótulos/UI)
+- Sem Framer Motion de propósito — motion system próprio em CSS + SVG + hooks
+  (`lib/hooks.ts`: `useInView`, `useScrollProgress`, `useMouseParallax`, `useParallax`;
+  `lib/motion.ts` + `components/ui/motion.tsx`: padrões nomeados, `Parallax`, `Stagger`)
 
 ## Como rodar
 
@@ -32,12 +35,16 @@ src/
     layout.tsx             # fontes, header/footer, JSON-LD global
     sitemap.ts, robots.ts
   components/              # componentes de UI e seções reutilizáveis
-  content/                 # dados (serviços, FAQ, Noryos OS, navegação) —
+    ui/                      # primitivos (Button, Icon, SpotlightCard, motion, ...)
+    system/                  # visuais próprios (SystemCanvas, SystemFlow, FragmentGrid, ...)
+  content/                 # dados (serviços, FAQ, Noryos OS, navegação, home) —
                             # separados de componente, editar aqui não em JSX
   lib/
     config.ts               # branding, WhatsApp, e-mail, URLs — config central
     seo.ts                   # helpers de metadata/structured data (JSON-LD)
     supabase.ts              # client do Supabase (condicional)
+    hooks.ts                 # hooks de motion (inView, scrollProgress, parallax, spotlight)
+    motion.ts                # tokens/helpers do motion system (stagger, delays)
 ```
 
 ## Como alterar o WhatsApp
@@ -50,7 +57,7 @@ Enquanto a variável estiver vazia, os CTAs caem em fallback de e-mail.
 ## Como trocar logo e favicon
 
 - **Logo:** hoje o header/footer renderizam um fallback tipográfico
-  ("Noryos.", fonte Space Grotesk). Quando o logo existir, troque o bloco
+  ("Noryos" + ponto ciano, fonte Manrope). Quando o logo existir, troque o bloco
   `<Link>` em `src/components/Header.tsx` e `Footer.tsx` por um
   `<Image>` do `next/image` apontando pro arquivo em `public/`.
 - **Favicon:** substitua `src/app/favicon.ico` pelo arquivo definitivo

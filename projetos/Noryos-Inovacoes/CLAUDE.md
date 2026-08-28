@@ -46,6 +46,8 @@ essas informações aqui.
 - Site institucional é Next.js + TypeScript + Tailwind, vive em `site/`
   (app isolado, não confundir com `sites/` que guarda o protótipo
   estático arquivado). Ver `site/README.md` pra rodar/configurar
-- Identidade visual atual: `identidade/design-guide.md` (dark/tecnológico,
-  ciano `#2DD4FF` + verde `#43E6A6`) — substitui a direção editorial
-  anterior por mudança de posicionamento, não por preferência estética
+- Identidade visual atual: `identidade/design-guide.md` — redesign "Digital
+  Operating System" (28/08/2026): dark/tecnológico, ciano `#2DD4FF` + verde
+  `#43E6A6` (paleta-base mantida), tipografia Manrope + Inter + Geist Mono,
+  motion system próprio. Substitui a direção editorial anterior por mudança
+  de posicionamento, não por preferência estética

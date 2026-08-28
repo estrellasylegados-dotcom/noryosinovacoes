@@ -13,14 +13,14 @@ export const metadata: Metadata = {
 
 export default function DiagnosticoPage() {
   return (
-    <section className="py-20">
+    <section className="section">
       <Container className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <Reveal>
           <SectionLabel>Diagnóstico Digital Noryos</SectionLabel>
-          <h1 className="text-3xl font-medium sm:text-4xl">
+          <h1 className="t-display text-[clamp(2.25rem,1.6rem+2.6vw,3.4rem)]">
             Descubra onde sua operação digital pode melhorar.
           </h1>
-          <p className="mt-5 text-[var(--color-text-muted)]">
+          <p className="mt-6 t-lead">
             Cinco etapas curtas sobre sua empresa, presença digital, aquisição de clientes, atendimento e
             objetivos. Sem criar conta, sem compromisso.
           </p>

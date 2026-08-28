@@ -4,37 +4,53 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Container } from "./ui/Container";
 import { WhatsappCTA } from "./WhatsappCTA";
-import { navegacaoPrincipal } from "@/content/navegacao";
+import { navegacaoHeader } from "@/content/navegacao";
 import { siteConfig } from "@/lib/config";
 
+/**
+ * Header transparente sobre o hero; ao rolar ganha fundo translúcido + blur
+ * + hairline (§8). Menu mobile em painel full-height. Logo tipográfica —
+ * pronta pra virar <Image> quando o arquivo existir.
+ */
 export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   return (
     <header
       data-scrolled={scrolled}
-      className="site-header sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-ink)]/90 backdrop-blur-md"
+      className="site-header fixed inset-x-0 top-0 z-50 border-b"
     >
-      <Container className="flex h-18 items-center justify-between py-4">
-        <Link href="/" className="font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight">
+      <Container className="flex h-[var(--header-h)] items-center justify-between">
+        <Link
+          href="/"
+          className="font-display text-lg font-bold tracking-tight"
+          onClick={() => setOpen(false)}
+        >
           {siteConfig.shortName}
           <span className="text-[var(--color-cyan)]">.</span>
         </Link>
 
-        <nav className="hidden gap-8 md:flex" aria-label="Navegação principal">
-          {navegacaoPrincipal.map((item) => (
+        <nav className="hidden items-center gap-7 md:flex" aria-label="Navegação principal">
+          {navegacaoHeader.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
+              className="text-sm text-[var(--color-text-muted)] transition-colors duration-200 hover:text-[var(--color-text)]"
             >
               {item.label}
             </Link>
@@ -43,41 +59,46 @@ export function Header() {
 
         <div className="hidden md:block">
           <WhatsappCTA variant="primary" className="!px-5 !py-2.5 text-sm">
-            Conversar sobre meu projeto
+            Conversar
           </WhatsappCTA>
         </div>
 
         <button
-          className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] md:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--hairline-strong)] text-[var(--color-text)] md:hidden"
           aria-label={open ? "Fechar menu" : "Abrir menu"}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
         >
-          <span aria-hidden>{open ? "✕" : "☰"}</span>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+            {open ? <path d="M4 4l10 10M14 4L4 14" /> : <path d="M2 5h14M2 9h14M2 13h14" />}
+          </svg>
         </button>
       </Container>
 
-      {open && (
-        <div className="border-t border-[var(--color-border)] md:hidden">
-          <Container className="flex flex-col gap-1 py-4">
-            {navegacaoPrincipal.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-[var(--radius-sm)] px-2 py-3 text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-card)] hover:text-[var(--color-text)]"
-                onClick={() => setOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <div className="mt-2">
-              <WhatsappCTA variant="primary" className="w-full">
-                Conversar sobre meu projeto
-              </WhatsappCTA>
-            </div>
-          </Container>
-        </div>
-      )}
+      {/* painel mobile */}
+      <div
+        className={`fixed inset-0 top-[var(--header-h)] z-40 origin-top bg-[var(--color-ink)] transition-[opacity,transform] duration-300 ease-[var(--ease-premium)] md:hidden ${
+          open ? "pointer-events-auto opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
+        }`}
+      >
+        <Container className="flex h-full flex-col gap-1 py-6">
+          {navegacaoHeader.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="border-b border-[var(--hairline)] py-4 text-lg font-medium tracking-tight text-[var(--color-text)]"
+              onClick={() => setOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+          <div className="mt-6">
+            <WhatsappCTA variant="primary" className="w-full">
+              Conversar sobre meu projeto
+            </WhatsappCTA>
+          </div>
+        </Container>
+      </div>
     </header>
   );
 }

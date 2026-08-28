@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 
 export default function PoliticaPrivacidadePage() {
   return (
-    <section className="py-20">
+    <section className="section">
       <Container className="max-w-2xl">
-        <h1 className="text-3xl font-medium">Política de Privacidade</h1>
+        <h1 className="t-h2">Política de Privacidade</h1>
         <p className="mt-3 text-sm text-[var(--color-text-muted)]">
           Última atualização: {new Date().toLocaleDateString("pt-BR", { year: "numeric", month: "long" })}
         </p>

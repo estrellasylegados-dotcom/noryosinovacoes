@@ -27,26 +27,26 @@ export default function SolucoesPage() {
           ])
         )}
       />
-      <section className="border-b border-[var(--color-border)] py-20">
+      <section className="hero-bleed tech-grid glow-cyan relative overflow-hidden border-b border-[var(--hairline)] pb-16 pt-[calc(var(--header-h)+72px)]">
         <Container>
           <SectionLabel>Soluções</SectionLabel>
-          <h1 className="max-w-2xl text-3xl font-medium sm:text-4xl">
+          <h1 className="t-display max-w-3xl text-[clamp(2.25rem,1.6rem+2.6vw,3.4rem)]">
             Soluções para diferentes etapas do seu negócio
           </h1>
-          <p className="mt-5 max-w-2xl text-[var(--color-text-muted)]">
+          <p className="mt-6 max-w-2xl t-lead">
             Cada solução resolve um problema específico — e funciona ainda melhor quando conectada às outras dentro
             da mesma operação.
           </p>
         </Container>
       </section>
 
-      <section className="py-16">
-        <Container className="grid gap-6">
+      <section className="section">
+        <Container className="grid gap-4">
           {servicos.map((servico, i) => (
             <Reveal
               key={servico.slug}
               delay={i * 70}
-              className="card-lift grid gap-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-card)] p-8 md:grid-cols-[auto_1fr_auto] md:items-center"
+              className="spotlight-card grid gap-6 p-8 md:grid-cols-[auto_1fr_auto] md:items-center"
             >
               <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-cyan)] md:w-40">
                 {servico.tag}

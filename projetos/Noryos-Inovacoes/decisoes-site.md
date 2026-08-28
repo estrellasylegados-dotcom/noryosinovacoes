@@ -50,7 +50,8 @@
 
 ## Stack e arquitetura
 
-- Next.js (App Router) + TypeScript + Tailwind CSS v4, sem Framer Motion (motion via CSS + `IntersectionObserver` mínimo) — decisão de manter dependências enxutas.
+- Next.js (App Router) + TypeScript + Tailwind CSS v4, sem Framer Motion — motion system próprio (CSS + SVG + hooks de `IntersectionObserver`/rAF), decisão de manter dependências enxutas mantida no redesign.
+- **Redesign "Digital Operating System" (28/08/2026):** camada de experiência refeita — hero com sistema vivo (`SystemCanvas`), tipografia Manrope + Inter + Geist Mono, motion system nomeado, cards com spotlight, Noryos OS Explorer como janela de software, Diagnóstico como ferramenta visual, timelines e parallax de scroll. Estratégia, arquitetura de informação e SEO preservados. Ver `identidade/design-guide.md` (atualizado).
 - App vive em `projetos/Noryos-Inovacoes/site/` (projeto Next.js isolado, `node_modules` já coberto pelo `.gitignore` raiz).
 - Protótipo estático anterior (one-page, direção "Grafite + Esmeralda") arquivado em `projetos/Noryos-Inovacoes/sites/prototipo-v1-onepage.html` — não apagado, substituído como ativo principal.
 - SEO técnico: metadata por página, `sitemap.ts`, `robots.ts`, Open Graph, JSON-LD (Organization, WebSite, Service, BreadcrumbList, FAQPage).
