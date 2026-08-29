@@ -104,11 +104,17 @@ compartilhado `src/components/SolutionPage.tsx` + dado em
 
 ## Como publicar
 
-Ainda não configurado nesta entrega. Recomendado: Vercel (deploy nativo
-do Next.js) apontando o domínio `noryosinovacoes.com.br` via DNS na
-Hostinger, ou build estático/Node na própria Hostinger se preferir tudo
-num único provedor. Antes de publicar: preencher `.env.local` real,
-trocar favicon, revisar `/sobre` (nome do responsável) e rodar
+Alvo definido: **tudo na Hostinger** (plano Business → Web Apps / Node.js),
+com deploy automático a cada `git push`. Passo a passo completo em
+[`DEPLOY-HOSTINGER.md`](./DEPLOY-HOSTINGER.md).
+
+Resumo: `next.config.ts` já está com `output: "standalone"`; conecta-se o
+repo GitHub no hPanel apontando o root pra `projetos/Noryos-Inovacoes/site`,
+preenchem-se as Environment variables lá, e o domínio
+`noryosinovacoes.com.br` é anexado ao Web App (DNS interno da Hostinger).
+
+Antes de publicar: preencher as variáveis reais na Hostinger, trocar
+favicon, revisar `/sobre` (nome do responsável) e rodar
 `/revisar-site-noryos` (skill do MazyOS) como checklist final.
 
 ## O que NÃO está pronto ainda (pendências reais)
@@ -117,4 +123,5 @@ trocar favicon, revisar `/sobre` (nome do responsável) e rodar
 - Projeto Supabase real
 - Logo e favicon definitivos
 - IDs de analytics
-- Deploy e DNS
+- Deploy: código pronto (`output: standalone` + guia em `DEPLOY-HOSTINGER.md`);
+  falta conectar o repo no hPanel, preencher as env vars e anexar o domínio
