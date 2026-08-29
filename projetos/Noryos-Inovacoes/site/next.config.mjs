@@ -1,7 +1,10 @@
-import type { NextConfig } from "next";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const nextConfig: NextConfig = {
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   /**
    * Deploy self-hospedado (Hostinger Web Apps / Node.js).
    *
@@ -17,7 +20,7 @@ const nextConfig: NextConfig = {
    * Sem isso, o Next pode inferir a raiz de tracing errada ao encontrar
    * `.git` / lockfiles acima na árvore. Fixa a raiz nesta pasta.
    */
-  outputFileTracingRoot: path.join(__dirname),
+  outputFileTracingRoot: __dirname,
 };
 
 export default nextConfig;

@@ -21,12 +21,36 @@ até 5 apps), com integração GitHub e **build automático a cada push**.
   *Hostinger Connector* pra VS Code, que faz deploy direto do editor —
   mas é um caminho alternativo ao GitHub, e não é o que vamos usar.)
 
+## Compatibilidade — versão do Next.js (importante)
+
+O projeto está fixado em **Next.js 15.5.x** de propósito. O Next 16 usa
+Turbopack por padrão e seu binário nativo `@next/swc-linux-x64-gnu` exige
+**GLIBC 2.29+**. O ambiente de build da Hostinger Web Apps roda glibc 2.28
+(base Debian 10), então o build com Next 16 falha assim:
+
+```
+Attempted to load @next/swc-linux-x64-gnu, but:
+/lib64/libm.so.6: version `GLIBC_2.29' not found
+...
+Failed to load next.config.ts
+```
+
+O Next 15.5 compila o SWC contra glibc 2.28 e usa **webpack** no `next build`
+(sem Turbopack), então roda no ambiente da Hostinger. React 19, App Router,
+Server Actions e Tailwind v4 seguem iguais — nada de funcionalidade mudou.
+
+**Só voltar pro Next 16** depois de confirmar com a Hostinger que o glibc
+do ambiente de build subiu pra 2.29+. Ver `AGENTS.md`.
+
 ## Pré-requisitos
 
 - [x] Repositório no GitHub: `estrellasylegados-dotcom/noryosinovacoes`
       (o site vive no subdiretório `projetos/Noryos-Inovacoes/site`).
-- [x] `next.config.ts` com `output: "standalone"` e `outputFileTracingRoot`
-      fixado nesta pasta (já configurado).
+- [x] `next.config.mjs` com `output: "standalone"` e `outputFileTracingRoot`
+      fixado nesta pasta (já configurado). É `.mjs` (ESM puro) de propósito:
+      config `.ts` depende do SWC pra compilar, que é justamente o que
+      quebra no ambiente da Hostinger.
+- [x] `next` fixado em `15.5.24` no `package.json` (ver seção acima).
 - [ ] Domínio `noryosinovacoes.com.br` na conta Hostinger (já é).
 - [ ] Valores reais de ambiente (ver seção *Variáveis de ambiente*).
 
@@ -42,7 +66,7 @@ até 5 apps), com integração GitHub e **build automático a cada push**.
    repo.
 5. **Framework**: Next.js (preset). Deve preencher sozinho:
    - Install: `npm install`
-   - Build: `npm run build`
+   - Build: `npm run build` (Next 15 → webpack, sem Turbopack)
    - Start / entrypoint: gerenciado pelo preset (Next.js `standalone`).
      Se pedir comando de start manual, usar:
      `node .next/standalone/server.js` (a Hostinger injeta a porta via

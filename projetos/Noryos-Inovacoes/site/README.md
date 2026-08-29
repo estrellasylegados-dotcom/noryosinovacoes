@@ -6,7 +6,9 @@ o Diagnóstico Digital Noryos, e apresenta a metodologia Noryos OS. Ver
 
 ## Stack
 
-- **Next.js 16** (App Router) + **TypeScript** + **Tailwind CSS v4**
+- **Next.js 15.5** (App Router) + **TypeScript** + **Tailwind CSS v4**
+  — fixado no 15.x de propósito; ver `AGENTS.md` / `DEPLOY-HOSTINGER.md`
+  (o SWC do Next 16 exige glibc 2.29+, que a Hostinger não tem)
 - **Zod** — validação do formulário de diagnóstico
 - **@supabase/supabase-js** — persistência do diagnóstico (opcional nesta fase)
 - **Fontes** (`next/font/google`): Manrope (display) + Inter (corpo) + Geist Mono (rótulos/UI)
