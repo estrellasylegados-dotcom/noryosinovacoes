@@ -223,6 +223,7 @@ Nav: Soluções · Noryos OS · Diagnóstico · Como funciona · Sobre + CTA
 | Símbolo / ícone | `site/public/noryos-icon.png` | 1254×1254 | só a fita "N", fundo transparente. Usado como favicon e no JSON-LD `Organization.logo` |
 | Favicon (browser tab) | `site/src/app/icon.png` | = ícone | cópia do ícone; o Next gera a `<link rel="icon">` automaticamente |
 | Ícone iOS (apple-touch) | `site/src/app/apple-icon.png` | = ícone | idem, cópia do ícone |
+| Open Graph / Twitter | `site/src/app/opengraph-image.png` + `twitter-image.png` | 1731×909 (~1,9:1) | arte composta dark: logo + headline "Tecnologia que conecta…" + lista de serviços + domínio, sobre fundo de rede/plexus. Fundo sólido (não transparente) |
 
 ### Onde aparece
 
@@ -230,6 +231,10 @@ Nav: Soluções · Noryos OS · Diagnóstico · Como funciona · Sobre + CTA
   assinatura horizontal via `<Image>` do `next/image`, altura fixa
   (`h-7` no header, `h-8` no footer), `w-auto`. `alt` = "Noryos Inovações".
 - **Favicon / apple-icon:** automáticos a partir dos arquivos em `src/app/`.
+- **Open Graph / Twitter Card:** automáticos a partir de
+  `src/app/opengraph-image.png` / `twitter-image.png` (+ `.alt.txt`) — o
+  Next injeta `og:image` / `twitter:image` com URL absoluta e dimensão.
+  `twitter.card` = `summary_large_image`.
 - **JSON-LD** (`site/src/lib/seo.ts`): `Organization.logo` aponta pra
   `noryos-icon.png` em URL absoluta.
 
@@ -240,8 +245,8 @@ Nav: Soluções · Noryos OS · Diagnóstico · Como funciona · Sobre + CTA
   versão de wordmark escura (ainda não fornecida — pedir se precisar).
 - Servido sem otimização (`images.unoptimized` no `next.config.mjs`) pra
   garantir o PNG byte a byte como recebido.
-- **Pendente:** imagem de Open Graph (1200×630) — a assinatura transparente
-  não serve como preview de compartilhamento; precisa de arte composta.
+- Imagem de Open Graph: arte composta com **fundo sólido** (o wordmark
+  transparente sozinho não serve como preview de compartilhamento).
 
 ---
 
