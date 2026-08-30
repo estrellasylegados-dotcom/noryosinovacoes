@@ -60,7 +60,6 @@
 
 - Número de WhatsApp comercial definitivo
 - Projeto Supabase real (URL + service role key) pra persistir os diagnósticos
-- Logo e favicon definitivos
 - IDs de GA4 / GTM / Meta Pixel
 - Confirmação do nome usado em `/sobre` (assumi "Rafael Viriato" a partir do ambiente do projeto — confirmar se está correto antes de publicar)
 - Deploy (Vercel, Hostinger ou outro) e apontamento do domínio noryosinovacoes.com.br

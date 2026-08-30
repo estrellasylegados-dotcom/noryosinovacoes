@@ -95,12 +95,14 @@ Enquanto a variável estiver vazia, os CTAs caem em fallback de e-mail.
 
 ## Como trocar logo e favicon
 
-- **Logo:** hoje o header/footer renderizam um fallback tipográfico
-  ("Noryos" + ponto ciano, fonte Manrope). Quando o logo existir, troque o bloco
-  `<Link>` em `src/components/Header.tsx` e `Footer.tsx` por um
-  `<Image>` do `next/image` apontando pro arquivo em `public/`.
-- **Favicon:** substitua `src/app/favicon.ico` pelo arquivo definitivo
-  (mesmo nome, mesmo formato).
+- **Logo:** `Header.tsx` e `Footer.tsx` renderizam a assinatura oficial
+  via `<Image>` do `next/image` apontando pra `public/noryos-logo.png`
+  (símbolo em `public/noryos-icon.png`). Pra trocar, substitua o arquivo
+  em `public/` mantendo o nome; ajuste `width/height` no `<Image>` se a
+  proporção mudar. Ver `../identidade/design-guide.md` → "Logo".
+- **Favicon:** metadata file-based do App Router — `src/app/favicon.ico`
+  + `src/app/icon.png` + `src/app/apple-icon.png`. Regenerar a partir do
+  símbolo com `node scripts/gen-favicon.mjs` (lê `public/noryos-icon.png`).
 
 ## Como configurar o Supabase (Diagnóstico)
 
@@ -161,7 +163,6 @@ checklist final.
 
 - Número de WhatsApp comercial definitivo
 - Projeto Supabase real
-- Logo e favicon definitivos
 - IDs de analytics
 - Deploy: código pronto (`output: standalone` + guia em `DEPLOY-HOSTINGER.md`);
   falta conectar o repo no hPanel, preencher as env vars e anexar o domínio

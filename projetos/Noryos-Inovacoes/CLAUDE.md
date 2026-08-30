@@ -46,6 +46,12 @@ essas informações aqui.
 - Site institucional é Next.js + TypeScript + Tailwind, vive em `site/`
   (app isolado, não confundir com `sites/` que guarda o protótipo
   estático arquivado). Ver `site/README.md` pra rodar/configurar
+- Quality Gate do site: `cd site && npm run quality` (lint + build +
+  suíte Playwright E2E contra o build de produção — 2ª camada, depois
+  de `/revisar-site-noryos` e antes da inspeção visual humana). Testes
+  em `site/e2e/`; ver `site/README.md` → "Testes E2E" e a skill
+  `/validar-entrega`. Se um teste E2E pegar bug real, corrigir a
+  aplicação — nunca afrouxar o teste
 - Identidade visual atual: `identidade/design-guide.md` — redesign "Digital
   Operating System" (28/08/2026): dark/tecnológico, ciano `#2DD4FF` + verde
   `#43E6A6` (paleta-base mantida), tipografia Manrope + Inter + Geist Mono,
