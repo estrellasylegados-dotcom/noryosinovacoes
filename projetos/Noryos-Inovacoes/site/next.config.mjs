@@ -21,6 +21,14 @@ const nextConfig = {
    * `.git` / lockfiles acima na árvore. Fixa a raiz nesta pasta.
    */
   outputFileTracingRoot: __dirname,
+
+  /**
+   * Sem otimização de imagem em runtime. O deploy Hostinger Web Apps roda
+   * `next start` num ambiente enxuto — o otimizador (`sharp`) é uma fonte
+   * extra de falha e reprocessa os PNGs. Os ativos de marca (logo/ícone)
+   * devem ser servidos exatamente como fornecidos, então servimos estáticos.
+   */
+  images: { unoptimized: true },
 };
 
 export default nextConfig;

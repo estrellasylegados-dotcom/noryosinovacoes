@@ -10,6 +10,9 @@
 > Fonte de verdade técnica: `site/src/app/globals.css` (`@theme`) — nenhum
 > hex/valor solto nos componentes, tudo referencia token. Este documento
 > descreve a intenção; o CSS descreve os números.
+>
+> **29/08/2026:** logo e ícone oficiais recebidos e plugados no site — ver
+> a seção "Logo".
 
 ---
 
@@ -208,9 +211,37 @@ Nav: Soluções · Noryos OS · Diagnóstico · Como funciona · Sobre + CTA
 
 ## Logo
 
-- **Arquivo:** ainda não existe — fallback tipográfico ("Noryos" + ponto ciano, Manrope 700) no header e footer.
-- **Onde plugar quando existir:** `site/src/components/Header.tsx` e `Footer.tsx` (trocar o `<Link>` do fallback por `<Image>` do `next/image`).
-- **Favicon:** placeholder do Next em `site/src/app/favicon.ico` — trocar antes de publicar.
+> **Ativos oficiais recebidos em 29/08/2026.** Usar exatamente como
+> fornecidos — não recortar, recolorir, re-exportar nem regenerar. O
+> fallback tipográfico ("Noryos" + ponto ciano) foi aposentado.
+
+### Arquivos (fonte de verdade: `site/`)
+
+| Ativo | Caminho | Dimensão | Descrição |
+|---|---|---|---|
+| Assinatura horizontal | `site/public/noryos-logo.png` | 2172×724 (~3:1) | símbolo (fita "N" ciano→azul) + wordmark "Noryos / INOVAÇÕES" em branco. Fundo transparente |
+| Símbolo / ícone | `site/public/noryos-icon.png` | 1254×1254 | só a fita "N", fundo transparente. Usado como favicon e no JSON-LD `Organization.logo` |
+| Favicon (browser tab) | `site/src/app/icon.png` | = ícone | cópia do ícone; o Next gera a `<link rel="icon">` automaticamente |
+| Ícone iOS (apple-touch) | `site/src/app/apple-icon.png` | = ícone | idem, cópia do ícone |
+
+### Onde aparece
+
+- **Header** (`site/src/components/Header.tsx`) e **Footer** (`Footer.tsx`):
+  assinatura horizontal via `<Image>` do `next/image`, altura fixa
+  (`h-7` no header, `h-8` no footer), `w-auto`. `alt` = "Noryos Inovações".
+- **Favicon / apple-icon:** automáticos a partir dos arquivos em `src/app/`.
+- **JSON-LD** (`site/src/lib/seo.ts`): `Organization.logo` aponta pra
+  `noryos-icon.png` em URL absoluta.
+
+### Regras de uso
+
+- Wordmark é **branco** → só sobre fundo escuro (a identidade é dark-first).
+  Sobre fundo claro, usar o símbolo isolado (`noryos-icon.png`) ou uma
+  versão de wordmark escura (ainda não fornecida — pedir se precisar).
+- Servido sem otimização (`images.unoptimized` no `next.config.mjs`) pra
+  garantir o PNG byte a byte como recebido.
+- **Pendente:** imagem de Open Graph (1200×630) — a assinatura transparente
+  não serve como preview de compartilhamento; precisa de arte composta.
 
 ---
 

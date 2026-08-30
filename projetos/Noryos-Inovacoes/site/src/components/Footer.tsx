@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "./ui/Container";
 import { navegacaoFooter } from "@/content/navegacao";
 import { siteConfig } from "@/lib/config";
@@ -8,9 +9,14 @@ export function Footer() {
     <footer className="border-t border-[var(--hairline)] surface-1">
       <Container className="grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr]">
         <div className="max-w-sm">
-          <Link href="/" className="font-display text-lg font-bold tracking-tight">
-            {siteConfig.shortName}
-            <span className="text-[var(--color-cyan)]">.</span>
+          <Link href="/" className="inline-flex items-center" aria-label={`${siteConfig.name} — página inicial`}>
+            <Image
+              src="/noryos-logo.png"
+              alt={siteConfig.name}
+              width={2172}
+              height={724}
+              className="h-8 w-auto"
+            />
           </Link>
           <p className="mt-4 text-sm text-[var(--color-text-muted)]">{siteConfig.description}</p>
           <p className="mt-4 font-mono text-xs uppercase tracking-wider text-[var(--color-text-dim)]">

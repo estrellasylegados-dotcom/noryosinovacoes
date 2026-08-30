@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Container } from "./ui/Container";
 import { WhatsappCTA } from "./WhatsappCTA";
@@ -38,11 +39,18 @@ export function Header() {
       <Container className="flex h-[var(--header-h)] items-center justify-between">
         <Link
           href="/"
-          className="font-display text-lg font-bold tracking-tight"
+          className="flex items-center"
+          aria-label={`${siteConfig.name} — página inicial`}
           onClick={() => setOpen(false)}
         >
-          {siteConfig.shortName}
-          <span className="text-[var(--color-cyan)]">.</span>
+          <Image
+            src="/noryos-logo.png"
+            alt={siteConfig.name}
+            width={2172}
+            height={724}
+            priority
+            className="h-7 w-auto"
+          />
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex" aria-label="Navegação principal">

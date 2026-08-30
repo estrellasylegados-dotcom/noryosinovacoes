@@ -8,6 +8,7 @@ export function organizationJsonLd() {
     name: siteConfig.name,
     alternateName: siteConfig.shortName,
     url: siteConfig.url,
+    logo: `${siteConfig.url}/noryos-icon.png`,
     email: siteConfig.email,
     description: siteConfig.description,
     areaServed: "BR",
