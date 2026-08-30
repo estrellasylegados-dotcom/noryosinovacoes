@@ -58,7 +58,7 @@ function Metric({
 }
 
 export function DiagnosticPreview() {
-  const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.3 });
+  const [ref, inView] = useInView<HTMLDivElement>();
 
   return (
     <div ref={ref} data-anim="fade-up" className={`panel p-6 sm:p-8 ${inView ? "is-in" : ""}`}>

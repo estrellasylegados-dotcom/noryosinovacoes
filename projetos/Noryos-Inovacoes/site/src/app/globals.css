@@ -251,7 +251,7 @@ main {
 [data-anim="slide-reveal"] {
   opacity: 0;
   clip-path: inset(0 0 100% 0);
-  transform: translateY(14px);
+  transform: translateY(24px);
 }
 [data-anim].is-in {
   opacity: 1;
@@ -516,6 +516,14 @@ main {
 /* ======================================================================
    REDUCED MOTION
    ====================================================================== */
+/*
+  Regra (§19/§26): reduzir movimento NÃO é apagar a página. Mantém o que não
+  causa desconforto vestibular — o fade de entrada (sem deslocamento), o
+  header, as barras que preenchem, o count-up (que já pula pro valor final
+  via JS). Desliga o que é movimento de fato: parallax, loops de ambiente,
+  pulsos, brilho, barra de progresso. Só casa em `reduce` explícito — nunca
+  trata ausência/erro de matchMedia como reduce.
+*/
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
@@ -523,18 +531,25 @@ main {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  [data-anim], .reveal, .hero-rise {
-    opacity: 1 !important;
+  /* reveals: preserva o fade de opacidade, remove translate/scale/clip.
+     Mais específico que o `*` acima + !important => o fade sobrevive. */
+  [data-anim] {
+    transition: opacity var(--dur-2) var(--ease-premium) var(--anim-delay) !important;
     transform: none !important;
     clip-path: none !important;
-    animation: none !important;
   }
-  .draw-line { stroke-dashoffset: 0 !important; }
-  .fill-bar { transform: scaleX(1) !important; }
-  .flow-line, .node-pulse { animation: none !important; }
-  .spotlight-card:hover { transform: none !important; }
+  .reveal {
+    transition: opacity var(--dur-2) var(--ease-premium) !important;
+    transform: none !important;
+  }
+  .hero-rise { animation: none !important; opacity: 1 !important; }
+  .draw-line { stroke-dashoffset: 0 !important; transition: none !important; }
+  .fill-bar { transform: scaleX(1) !important; transition: none !important; }
+  /* movimento contínuo / decorativo: desligado */
+  .flow-line, .node-pulse, .rail-runner, .rail-runner-y, .ambient-drift,
+  .ambient-float, .sheen-track::after, .live-dot { animation: none !important; }
+  .spotlight-card, .spotlight-card:hover { transform: none !important; }
+  .spotlight-card::before { display: none; }
   .panel-swap { animation: none !important; }
-  .rail-runner, .rail-runner-y, .ambient-drift, .ambient-float,
-  .sheen-track::after, .live-dot { animation: none !important; }
   .scroll-progress { display: none; }
 }

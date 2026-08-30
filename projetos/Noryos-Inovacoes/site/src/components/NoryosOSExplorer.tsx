@@ -15,7 +15,7 @@ import { noryosOSFolders } from "@/content/noryos-os";
 const STATUS = ["Organizado", "Conectado", "Documentado"] as const;
 
 export function NoryosOSExplorer() {
-  const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.3 });
+  const [ref, inView] = useInView<HTMLDivElement>();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [selected, setSelected] = useState(0);
   const active = noryosOSFolders[selected];

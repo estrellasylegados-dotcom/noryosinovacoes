@@ -17,7 +17,7 @@ const steps: { label: string; icon: IconName }[] = [
 ];
 
 export function AutomationFlow() {
-  const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.4 });
+  const [ref, inView] = useInView<HTMLDivElement>();
 
   return (
     <div ref={ref} className="relative" role="img" aria-label="Fluxo: lead chega, entra no WhatsApp, é registrado no CRM e recebe follow-up automático.">

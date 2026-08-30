@@ -24,14 +24,21 @@ export function useReducedMotion(): boolean {
 type InViewOptions = {
   /** Só dispara uma vez (padrão) — evita re-animar ao rolar pra cima. */
   once?: boolean;
-  threshold?: number;
+  /**
+   * Recuo do gatilho. O padrão dispara quando o topo do elemento sobe até
+   * ~78% da viewport — ou seja, já claramente visível, pra a transição de
+   * entrada (450–800ms) acontecer DENTRO da tela, não no rodapé antes de
+   * aparecer. Nunca usar `threshold` alto aqui: em blocos mais altos que a
+   * viewport a razão de interseção não alcança o valor e a animação nunca
+   * dispara (visto em produção no mobile).
+   */
   rootMargin?: string;
 };
 
 export function useInView<T extends HTMLElement = HTMLDivElement>(
   options: InViewOptions = {}
 ): [RefObject<T | null>, boolean] {
-  const { once = true, threshold = 0, rootMargin = "0px 0px -12% 0px" } = options;
+  const { once = true, rootMargin = "0px 0px -22% 0px" } = options;
   const ref = useRef<T>(null);
   const [inView, setInView] = useState(false);
 
@@ -47,11 +54,11 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(
           setInView(false);
         }
       },
-      { threshold, rootMargin }
+      { threshold: 0, rootMargin }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [once, threshold, rootMargin]);
+  }, [once, rootMargin]);
 
   return [ref, inView];
 }
@@ -77,6 +84,7 @@ export function useScrollProgress<T extends HTMLElement = HTMLDivElement>(): [
 
     let raf = 0;
     let active = false;
+    let last = -1;
 
     const measure = () => {
       const rect = el.getBoundingClientRect();
@@ -85,7 +93,13 @@ export function useScrollProgress<T extends HTMLElement = HTMLDivElement>(): [
       const total = rect.height + vh;
       const passed = vh - rect.top;
       const p = Math.min(1, Math.max(0, passed / total));
-      setProgress(p);
+      // Só re-renderiza em passos perceptíveis — evita um render do React por
+      // frame de scroll (§27). ~125 updates no percurso todo, suficiente pra
+      // a barra preencher liso e a etapa ativa trocar.
+      if (Math.abs(p - last) > 0.008 || (p === 0 && last !== 0) || (p === 1 && last !== 1)) {
+        last = p;
+        setProgress(p);
+      }
       raf = active ? requestAnimationFrame(measure) : 0;
     };
 

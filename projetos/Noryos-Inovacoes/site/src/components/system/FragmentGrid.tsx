@@ -30,7 +30,7 @@ const LINKS: [string, string][] = [
 ];
 
 export function FragmentGrid() {
-  const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.35 });
+  const [ref, inView] = useInView<HTMLDivElement>();
 
   return (
     <div ref={ref}>

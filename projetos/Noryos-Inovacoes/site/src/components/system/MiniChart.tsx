@@ -11,7 +11,7 @@ import { useInView } from "@/lib/hooks";
 const bars = [34, 52, 41, 63, 58, 78, 70, 92];
 
 export function MiniChart() {
-  const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.4 });
+  const [ref, inView] = useInView<HTMLDivElement>();
 
   return (
     <div ref={ref} aria-hidden>

@@ -1,7 +1,7 @@
 "use client";
 
-import { CSSProperties, useEffect, useState } from "react";
-import { useMouseParallax } from "@/lib/hooks";
+import { CSSProperties } from "react";
+import { useInView, useMouseParallax } from "@/lib/hooks";
 
 /**
  * O "sistema vivo" do hero (§6) — os módulos do Noryos OS como partes de um
@@ -38,13 +38,17 @@ const CHIP_W = 116;
 const CHIP_H = 30;
 
 export function SystemCanvas({ faint = false }: { faint?: boolean }) {
-  const [ref, mouse] = useMouseParallax<HTMLDivElement>();
-  const [mounted, setMounted] = useState(false);
+  const [parallaxRef, mouse] = useMouseParallax<HTMLDivElement>();
+  // Desenha as conexões / entra os nós quando o canvas está de fato visível.
+  // Antes usava um timer de 120ms no mount — no rodapé (FinalCTA) isso rodava
+  // e terminava muito antes de o usuário rolar até lá.
+  const [inViewRef, inView] = useInView<HTMLDivElement>({ rootMargin: "0px 0px -12% 0px" });
+  const mounted = inView;
 
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 120);
-    return () => clearTimeout(t);
-  }, []);
+  const setRef = (el: HTMLDivElement | null) => {
+    parallaxRef.current = el;
+    inViewRef.current = el;
+  };
 
   const layer = (depth: number): CSSProperties => ({
     transform: `translate3d(${mouse.x * depth}px, ${mouse.y * depth}px, 0)`,
@@ -52,7 +56,7 @@ export function SystemCanvas({ faint = false }: { faint?: boolean }) {
   });
 
   return (
-    <div ref={ref} className="relative h-full w-full" aria-hidden>
+    <div ref={setRef} className="relative h-full w-full" aria-hidden>
       <svg
         viewBox="0 0 546 440"
         className="h-full w-full overflow-visible"

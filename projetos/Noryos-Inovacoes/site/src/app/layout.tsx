@@ -57,6 +57,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR" className={`${inter.variable} ${manrope.variable} ${geistMono.variable}`}>
       <body className="flex min-h-screen flex-col antialiased">
+        {/* Sem JS, o motion system não adiciona `.is-in` — garante conteúdo visível. */}
+        <noscript>
+          <style>{`[data-anim],.reveal{opacity:1!important;transform:none!important;clip-path:none!important}`}</style>
+        </noscript>
         <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(organizationJsonLd())} />
         <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(websiteJsonLd())} />
         <a

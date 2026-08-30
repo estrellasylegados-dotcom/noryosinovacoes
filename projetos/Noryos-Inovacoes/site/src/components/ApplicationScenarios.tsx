@@ -10,7 +10,7 @@ import { cenarios } from "@/content/home";
  * um case ou resultado. Seletor + cadeia de etapas que entra em sequência.
  */
 export function ApplicationScenarios() {
-  const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.25 });
+  const [ref, inView] = useInView<HTMLDivElement>();
   const [current, setCurrent] = useState(0);
   const cenario = cenarios[current];
 
