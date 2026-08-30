@@ -26,11 +26,13 @@ type InViewOptions = {
   once?: boolean;
   /**
    * Recuo do gatilho. O padrão dispara quando o topo do elemento sobe até
-   * ~78% da viewport — ou seja, já claramente visível, pra a transição de
-   * entrada (450–800ms) acontecer DENTRO da tela, não no rodapé antes de
-   * aparecer. Nunca usar `threshold` alto aqui: em blocos mais altos que a
-   * viewport a razão de interseção não alcança o valor e a animação nunca
-   * dispara (visto em produção no mobile).
+   * ~65% da viewport — ou seja, o elemento já está claramente na área de
+   * leitura, e a transição de entrada (450–800ms) acontece DENTRO da tela,
+   * não no rodapé um scroll inteiro antes de o usuário chegar (era o motivo
+   * de "parecer estático": o reveal terminava fora do campo de visão).
+   * Nunca usar `threshold` alto aqui: em blocos mais altos que a viewport a
+   * razão de interseção não alcança o valor e a animação nunca dispara
+   * (visto em produção no mobile).
    */
   rootMargin?: string;
 };
@@ -38,7 +40,7 @@ type InViewOptions = {
 export function useInView<T extends HTMLElement = HTMLDivElement>(
   options: InViewOptions = {}
 ): [RefObject<T | null>, boolean] {
-  const { once = true, rootMargin = "0px 0px -22% 0px" } = options;
+  const { once = true, rootMargin = "0px 0px -35% 0px" } = options;
   const ref = useRef<T>(null);
   const [inView, setInView] = useState(false);
 
