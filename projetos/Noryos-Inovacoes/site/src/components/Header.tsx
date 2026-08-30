@@ -10,8 +10,10 @@ import { siteConfig } from "@/lib/config";
 
 /**
  * Header transparente sobre o hero; ao rolar ganha fundo translúcido + blur
- * + hairline (§8). Menu mobile em painel full-height. Logo tipográfica —
- * pronta pra virar <Image> quando o arquivo existir.
+ * + hairline (§8). Menu mobile em painel full-height. Assinatura oficial
+ * (`/noryos-logo.png`) via next/image — altura fixa por breakpoint,
+ * `w-auto` preserva a proporção 3:1. Altura do header (`--header-h` 72px)
+ * inalterada; a logo escala dentro dela.
  */
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -49,7 +51,7 @@ export function Header() {
             width={2172}
             height={724}
             priority
-            className="h-7 w-auto"
+            className="h-9 w-auto lg:h-[52px]"
           />
         </Link>
 

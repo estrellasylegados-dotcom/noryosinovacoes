@@ -15,7 +15,7 @@ export function Footer() {
               alt={siteConfig.name}
               width={2172}
               height={724}
-              className="h-8 w-auto"
+              className="h-9 w-auto md:h-10"
             />
           </Link>
           <p className="mt-4 text-sm text-[var(--color-text-muted)]">{siteConfig.description}</p>
