@@ -25,14 +25,16 @@ description: >
 Dentro de `projetos/Noryos-Inovacoes/site/`:
 
 ```bash
-npm run lint
-npm run build
+npm run quality   # lint + build + suíte Playwright E2E (contra o build de produção)
 ```
 
-Corrigir qualquer erro antes de seguir. Se o build passar, checar no
-output se todas as rotas esperadas foram geradas (`/`, `/solucoes`,
+Corrigir qualquer erro antes de seguir — se um teste E2E falhar por bug
+real, corrigir a aplicação, não afrouxar o teste. Checar no output do
+build se todas as rotas esperadas foram geradas (`/`, `/solucoes`,
 `/solucoes/sites`, `/solucoes/automacoes`, `/solucoes/performance`,
 `/sobre`, `/diagnostico`, `/contato`, `/politica-de-privacidade`).
+Screenshots de evidência ficam em `site/e2e/__evidence__/` — abrir e
+olhar. Ver `site/README.md` → "Testes E2E".
 
 ### Passo 2 — Checklist manual
 
@@ -83,3 +85,6 @@ configurado) — travar só por bug real ou violação das regras acima.
 - Nunca "consertar" copy inventando prova social pra parecer mais pronto — reportar como pendência, não mascarar
 - Se o `npm run build` falhar, resolver o erro antes de continuar o checklist
 - Rodar esta skill sempre antes de qualquer deploy real do site
+- Esta skill cobre copy/SEO/LGPD/posicionamento. Para o Quality Gate completo
+  (navegador real, responsividade, motion, Console/Network, regressão,
+  veredito APROVADO/REPROVADO), rodar `/validar-entrega` — que encadeia esta.

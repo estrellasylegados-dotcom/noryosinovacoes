@@ -29,6 +29,59 @@ alteração de arquivo.
 
 ---
 
+## QUALITY GATE / DEFINITION OF DONE
+
+> Regra obrigatória e permanente. Vale pra **todas** as tarefas, não só
+> o site da Noryos. Tem prioridade sobre velocidade, conveniência,
+> economia de passos e conclusão rápida. É melhor dizer "ainda não está
+> validado" do que "pronto" sem evidência.
+
+**Regra:** antes de informar que uma implementação está **pronta,
+concluída, funcionando, validada, corrigida, publicada ou aprovada**,
+execute os testes adequados ao tipo de tarefa e observe o resultado real
+sempre que o ambiente permitir. Build, lint ou compilação isoladamente
+**não comprovam funcionalidade**. Mudanças visuais ou interativas devem
+ser verificadas em navegador real. Quando algo não puder ser testado,
+declare explicitamente como **não validado**.
+
+**Ciclo de toda tarefa:** ENTENDER → PLANEJAR → IMPLEMENTAR → EXECUTAR →
+TESTAR → OBSERVAR O RESULTADO REAL → ANALISAR CRITICAMENTE → CORRIGIR →
+RETESTAR → VALIDAR → só então DECLARAR CONCLUÍDO.
+
+- Código alterado ≠ funcionalidade funcionando
+- Build passando ≠ experiência funcionando
+- Lint passando ≠ implementação correta
+- Teste unitário passando ≠ fluxo completo validado
+- "Concluído" exige evidência
+
+**Vocabulário — sempre diferenciar o nível de validação:**
+`IMPLEMENTADO` · `TESTADO` · `VALIDADO LOCALMENTE` · `VALIDADO EM
+PRODUÇÃO`. Nunca colapsar um no outro. Ex.: "Implementei o favicon e
+validei arquivo + metadata, mas não confirmei visualmente a aba do
+navegador em produção" — nunca só "favicon funcionando".
+
+**Proibido:** "deve funcionar" / "provavelmente funciona" / "está
+pronto" sem dizer o nível de validação; declarar algo testado tendo só
+lido o código; afirmar "favicon funcionando" ou "animações funcionando"
+sem observar o resultado com o browser disponível.
+
+**Status obrigatório em toda entrega relevante:** encerrar com
+`QUALITY GATE: APROVADO` ou `QUALITY GATE: REPROVADO`. APROVADO só se os
+testes pertinentes passarem. REPROVADO → continuar corrigindo ou
+informar o bloqueio real.
+
+**Relatório final padrão (tarefas relevantes):** IMPLEMENTADO / TESTES
+EXECUTADOS / VALIDAÇÃO VISUAL / RESULTADO / CORREÇÕES REALIZADAS /
+PENDÊNCIAS / QUALITY GATE.
+
+**Checklist por tipo de entrega** (WEB/UI, BACKEND, API, AUTOMAÇÃO,
+CONTEÚDO, DOCUMENTO, INFRA, INTEGRAÇÃO) e o Definition of Done detalhado
+vivem na skill **`/validar-entrega`** — rodar antes de considerar
+qualquer entrega relevante concluída. Pra o site institucional da
+Noryos, `/validar-entrega` também encadeia `/revisar-site-noryos`.
+
+---
+
 ## Contexto do negócio
 
 No início de toda conversa, ler os seguintes arquivos (quando existirem

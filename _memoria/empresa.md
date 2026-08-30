@@ -9,7 +9,7 @@
 **Perfil:** Iniciativa pessoal / founder-led — Rafael é responsável direto pelos projetos, sem equipe ainda.
 **Atende clientes:** Público amplo de PME no início (pequenos negócios, profissionais liberais, prestadores de serviço, e-commerce). Possível nicho futuro em odontologia — ainda não confirmado.
 **Equipe:** Só o fundador por enquanto.
-**Ferramentas:** Next.js (fixado em 15.5.24 — restrição de glibc do build da Hostinger) + TypeScript + Tailwind CSS + Supabase (site institucional), deploy self-hospedado na Hostinger Web Apps (Node.js) com CDN da Hostinger na frente, MazyOS como sistema operacional interno de gestão/conteúdo.
+**Ferramentas:** Next.js (fixado em 15.5.24 — restrição de glibc do build da Hostinger) + TypeScript + Tailwind CSS + Supabase (site institucional), deploy self-hospedado na Hostinger Web Apps (Node.js) com CDN da Hostinger na frente, MazyOS como sistema operacional interno de gestão/conteúdo. Testes E2E do site: Playwright (`site/e2e/`, `npm run quality` = lint + build + E2E) — 2ª camada do Quality Gate.
 **Principais entregas:** Sites institucionais/comerciais, automação (atendimento, integrações), Google/Meta Ads, conteúdo e redes sociais.
 
 ## Contexto adicional
