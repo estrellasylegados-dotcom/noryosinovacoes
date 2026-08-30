@@ -222,16 +222,25 @@ Nav: Soluções · Noryos OS · Diagnóstico · Como funciona · Sobre + CTA
 |---|---|---|---|
 | Assinatura horizontal | `site/public/noryos-logo.png` | 2172×724 (~3:1) | símbolo (fita "N" ciano→azul) + wordmark "Noryos / INOVAÇÕES" em branco. Fundo transparente |
 | Símbolo / ícone | `site/public/noryos-icon.png` | 1254×1254 | só a fita "N", fundo transparente. Usado como favicon e no JSON-LD `Organization.logo` |
-| Favicon (browser tab) | `site/src/app/icon.png` | = ícone | cópia do ícone; o Next gera a `<link rel="icon">` automaticamente |
-| Ícone iOS (apple-touch) | `site/src/app/apple-icon.png` | = ícone | idem, cópia do ícone |
+| Favicon clássico | `site/src/app/favicon.ico` | 16 / 32 / 48 | multi-resolução, reamostragem do símbolo. Cobre o caminho `/favicon.ico` |
+| Favicon PNG (App Router) | `site/src/app/icon.png` | 512×512 | derivado do símbolo; o Next gera a `<link rel="icon">` |
+| Ícone iOS (apple-touch) | `site/src/app/apple-icon.png` | 180×180 | derivado do símbolo (padrão Apple touch icon) |
 | Open Graph / Twitter | `site/src/app/opengraph-image.png` + `twitter-image.png` | 1731×909 (~1,9:1) | arte composta dark: logo + headline "Tecnologia que conecta…" + lista de serviços + domínio, sobre fundo de rede/plexus. Fundo sólido (não transparente) |
 
 ### Onde aparece
 
-- **Header** (`site/src/components/Header.tsx`) e **Footer** (`Footer.tsx`):
-  assinatura horizontal via `<Image>` do `next/image`, altura fixa
-  (`h-7` no header, `h-8` no footer), `w-auto`. `alt` = "Noryos Inovações".
-- **Favicon / apple-icon:** automáticos a partir dos arquivos em `src/app/`.
+- **Header** (`site/src/components/Header.tsx`): assinatura horizontal via
+  `<Image>` do `next/image` — `h-9` (36px) até `lg`, `h-[52px]` no desktop
+  (≥1024px); `w-auto` preserva a proporção 3:1. Altura do header
+  (`--header-h` 72px) inalterada. Alinhada à borda do container, sem offset
+  lateral (mesmo eixo do H1 do hero). `alt` = "Noryos Inovações".
+- **Footer** (`Footer.tsx`): mesma assinatura, `h-9` mobile / `h-10` (40px)
+  no desktop — menor que o header, ainda legível.
+- **Favicon:** estratégia única = file-based metadata do App Router
+  (`favicon.ico` + `icon.png` + `apple-icon.png` em `src/app/`). **Sem**
+  `metadata.icons` no `layout.tsx` (evita `<link>` duplicados). Os 3 são
+  gerados por `site/scripts/gen-favicon.mjs` a partir de
+  `public/noryos-icon.png` — sem redesenhar, recolorir ou adicionar fundo.
 - **Open Graph / Twitter Card:** automáticos a partir de
   `src/app/opengraph-image.png` / `twitter-image.png` (+ `.alt.txt`) — o
   Next injeta `og:image` / `twitter:image` com URL absoluta e dimensão.
@@ -246,6 +255,9 @@ Nav: Soluções · Noryos OS · Diagnóstico · Como funciona · Sobre + CTA
   versão de wordmark escura (ainda não fornecida — pedir se precisar).
 - Servido sem otimização (`images.unoptimized` no `next.config.mjs`) pra
   garantir o PNG byte a byte como recebido.
+- Cache dos ícones e da logo (`.ico`/`.png` na raiz): `public,
+  max-age=86400, stale-while-revalidate=604800` via `headers()` no
+  `next.config.mjs` — sem cache de 1 ano durante o refino de identidade.
 - Imagem de Open Graph: arte composta com **fundo sólido** (o wordmark
   transparente sozinho não serve como preview de compartilhamento).
 
