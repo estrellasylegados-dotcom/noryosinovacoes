@@ -6,11 +6,11 @@
 
 ## Fase
 
-Lançamento da Noryos Inovações — código do site institucional já construído e testado (build + lint verdes). Em 28/08/2026 passou por um redesign profundo da camada visual ("Digital Operating System": novo hero, tipografia, motion system, cards, Noryos OS Explorer, diagnóstico visual) — estratégia, SEO e arquitetura preservados. Ainda falta destravar as pendências humanas abaixo antes de publicar e iniciar prospecção ativa.
+Pós-lançamento da Noryos Inovações — o site institucional está no ar em https://noryosinovacoes.com.br (deploy Hostinger Web Apps, automático a partir do `main`). Construído e testado (build + lint verdes). Em 28/08/2026 passou por um redesign profundo da camada visual ("Digital Operating System": novo hero, tipografia, motion system, cards, Noryos OS Explorer, diagnóstico visual) — estratégia, SEO e arquitetura preservados. Em 29/08/2026: auditoria + ajuste do motion system (reveals agora perceptíveis no scroll — o gatilho disparava no rodapé) e logo/favicon/Open Graph oficiais plugados. Fase agora é iteração pós-lançamento; ainda falta destravar as pendências humanas abaixo antes de prospecção ativa.
 
 ## Prioridade principal
 
-Finalizar as pendências do site institucional (`projetos/Noryos-Inovacoes/site/`): número de WhatsApp definitivo, projeto Supabase real, logo/favicon, IDs de analytics, e deploy com o domínio noryosinovacoes.com.br.
+Finalizar as pendências humanas do site institucional (`projetos/Noryos-Inovacoes/site/`): número de WhatsApp definitivo, projeto Supabase real e IDs de analytics. (Logo/favicon e deploy no domínio noryosinovacoes.com.br: feitos em 29/08/2026.)
 
 ## O que pode esperar
 

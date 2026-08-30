@@ -151,7 +151,8 @@ sinal de competência). Tudo é CSS + SVG + hooks próprios em `src/lib/hooks.ts
 
 ### Regras
 
-- `prefers-reduced-motion`: tudo que é decorativo é neutralizado no CSS global; conteúdo sempre visível.
+- **Gatilho dos reveals** (`useInView`): dispara quando o topo do elemento chega a ~65% da viewport (`rootMargin: 0 0 -35% 0`, sem `threshold`) — a entrada acontece com o conteúdo já no campo de visão, não no rodapé (o ajuste de 29/08/2026 que resolveu o "parece estático"). Nunca usar `threshold` alto: em blocos mais altos que a viewport a razão de interseção não é atingida e a animação não dispara (visto no mobile).
+- `prefers-reduced-motion` (só casa em `reduce` explícito): mantém o fade de entrada — opacidade, sem deslocamento —, header, barras e count-up; desliga só o movimento de fato: parallax, loops de ambiente, pulso, brilho, barra de progresso. Sem JS, um `<noscript>` garante que `[data-anim]`/`.reveal` fiquem visíveis.
 - Tablet: reduzir. Mobile: reduzir bastante — flows viram verticais, parallax e spotlight desligam.
 - Nenhum autoplay caótico, nenhum scroll-jacking, nenhuma máquina de escrever / glitch / letras pulando.
 - Legado: `ui/Reveal` (+ `.card-lift`, `.hero-rise`, `.site-header[data-scrolled]`) continua nas páginas internas. Padrão novo: `SectionReveal` / `Stagger` / `AnimatedHeading`.
