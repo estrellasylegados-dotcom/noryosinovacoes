@@ -215,6 +215,12 @@ Nav: Soluções · Noryos OS · Diagnóstico · Como funciona · Sobre + CTA
 > **Ativos oficiais recebidos em 29/08/2026.** Usar exatamente como
 > fornecidos — não recortar, recolorir, re-exportar nem regenerar. O
 > fallback tipográfico ("Noryos" + ponto ciano) foi aposentado.
+>
+> **29/08/2026 — 2ª entrega da assinatura horizontal:** `noryos-logo.png`
+> foi substituído por um arquivo oficial novo (wordmark com a fita "N" mais
+> limpa e a dispersão mais contida). Mesma dimensão 2172×724 e proporção
+> 3:1; só o `noryos-logo.png` mudou — ícone, favicons e Open Graph seguem
+> os da 1ª entrega.
 
 ### Arquivos (fonte de verdade: `site/`)
 
@@ -230,10 +236,13 @@ Nav: Soluções · Noryos OS · Diagnóstico · Como funciona · Sobre + CTA
 ### Onde aparece
 
 - **Header** (`site/src/components/Header.tsx`): assinatura horizontal via
-  `<Image>` do `next/image` — `h-9` (36px) até `lg`, `h-[52px]` no desktop
-  (≥1024px); `w-auto` preserva a proporção 3:1. Altura do header
-  (`--header-h` 72px) inalterada. Alinhada à borda do container, sem offset
-  lateral (mesmo eixo do H1 do hero). `alt` = "Noryos Inovações".
+  `<Image>` do `next/image` — no mobile trava a altura (`h-9` / 36px), no
+  desktop (≥1024px) trava a largura (`lg:w-[170px]` + `lg:h-auto`); a
+  dimensão livre fica `auto`, preservando a proporção nativa 3:1. 170px foi
+  escolhido testando 160/170/180 — equilibra logo, menu e botão "Conversar"
+  e mantém "INOVAÇÕES" legível sem dominar a faixa de 72px (`--header-h`,
+  inalterada). Alinhada à borda do container, sem offset lateral (mesmo eixo
+  do H1 do hero). `alt` = "Noryos Inovações".
 - **Footer** (`Footer.tsx`): mesma assinatura, `h-9` mobile / `h-10` (40px)
   no desktop — menor que o header, ainda legível.
 - **Favicon:** estratégia única = file-based metadata do App Router
