@@ -34,7 +34,10 @@
 
 - Página `/diagnostico`, formulário em 5 etapas, sem exigir conta.
 - Não promete resultado automático nem score nesta primeira versão (análise manual/semiautomática).
-- Persistência via Supabase preparada (`site/src/lib/supabase.ts`), mas **sem projeto configurado ainda** — formulário funciona e confirma recebimento mesmo sem Supabase ativo.
+- Envio via `POST /api/diagnostico` (route handler, `site/src/app/api/diagnostico/route.ts`). Pipeline: método → Content-Type → limite de payload → JSON válido → honeypot → tempo mínimo de preenchimento → rate limit por IP → validação Zod → sanitização → dedupe → **persistência (Supabase) → só então notificação por e-mail (Resend)**. Requisição classificada como spam não persiste e não dispara e-mail.
+- Rate limit compartilhado via Supabase RPC (`diagnostico_check_rate_limit`), com fallback em memória do processo. Persistência: fallback local em arquivo é permitido só em dev/teste — em produção sem Supabase o endpoint responde **503 controlado** (não grava em disco, não mascara a falha).
+- Notificação por e-mail (`site/src/lib/email.ts`): destinatário lido **só** de `DIAGNOSTIC_NOTIFICATION_EMAIL` (server-side, nunca do formulário); provedor Resend via `fetch` (provider `mock` grava arquivo nos testes E2E — nenhum e-mail real na suíte). Falha de e-mail depois do lead salvo não perde o lead (resposta 200, `email:"error"`, log seguro).
+- **Estado (31/08/2026):** teste de conceito implementado e testado localmente (52 testes E2E verdes, anti-spam/rate limit/fallback validados) e commitado como trabalho em andamento; **Quality Gate ainda REPROVADO** — falta projeto Supabase real e API key do Resend pra confirmar persistência e envio reais.
 - Consentimento LGPD obrigatório no envio, com link pra `/politica-de-privacidade`.
 
 ## Regra de credibilidade (crítica)
@@ -59,7 +62,8 @@
 ## Pendências reais (não bloqueiam a entrega, mas precisam de ação humana)
 
 - Número de WhatsApp comercial definitivo
-- Projeto Supabase real (URL + service role key) pra persistir os diagnósticos
+- Projeto Supabase real (URL + service role key) — persistência dos diagnósticos + rate limit compartilhado; rodar os dois blocos de SQL de `site/src/lib/supabase.ts`. Sem ele, `/api/diagnostico` dá 503 em produção
+- Conta Resend + `RESEND_API_KEY` + `DIAGNOSTIC_NOTIFICATION_EMAIL` (fase de teste: rafaviriato@hotmail.com) pra a notificação por e-mail de novo diagnóstico. Depois: 1 checagem real controlada (ver `site/README.md`)
 - IDs de GA4 / GTM / Meta Pixel
 - Confirmação do nome usado em `/sobre` (assumi "Rafael Viriato" a partir do ambiente do projeto — confirmar se está correto antes de publicar)
 - Deploy (Vercel, Hostinger ou outro) e apontamento do domínio noryosinovacoes.com.br
