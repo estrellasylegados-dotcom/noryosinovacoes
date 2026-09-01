@@ -26,7 +26,7 @@
 
 ## CTA e conversão
 
-- CTA principal: "Conversar sobre meu projeto" → WhatsApp, centralizado em `site/src/lib/config.ts` (`NEXT_PUBLIC_WHATSAPP_NUMBER`, ainda vazio — cai em fallback de e-mail até ser definido).
+- CTA principal: "Conversar sobre meu projeto" → WhatsApp, centralizado em `site/src/lib/config.ts` (`NEXT_PUBLIC_WHATSAPP_NUMBER`). Número definido (01/09/2026): `5561999256901` — `(61) 99925-6901`. Aplicado no `.env.local` e validado no build local (`wa.me/5561999256901` renderiza). Falta setar a env var na produção da Hostinger + redeploy (`NEXT_PUBLIC_` é build-time); até lá, produção segue no fallback de e-mail.
 - CTAs secundários: "Conhecer as soluções", "Solicitar diagnóstico".
 - Evitar CTA genérico ("saiba mais", "clique aqui", "entre em contato") — não usados no site.
 
@@ -38,6 +38,7 @@
 - Rate limit compartilhado via Supabase RPC (`diagnostico_check_rate_limit`), com fallback em memória do processo. Persistência: fallback local em arquivo é permitido só em dev/teste — em produção sem Supabase o endpoint responde **503 controlado** (não grava em disco, não mascara a falha).
 - Notificação por e-mail (`site/src/lib/email.ts`): destinatário lido **só** de `DIAGNOSTIC_NOTIFICATION_EMAIL` (server-side, nunca do formulário); provedor Resend via `fetch` (provider `mock` grava arquivo nos testes E2E — nenhum e-mail real na suíte). Falha de e-mail depois do lead salvo não perde o lead (resposta 200, `email:"error"`, log seguro).
 - **Estado (31/08/2026):** teste de conceito implementado e testado localmente (52 testes E2E verdes, anti-spam/rate limit/fallback validados) e commitado como trabalho em andamento; **Quality Gate ainda REPROVADO** — falta projeto Supabase real e API key do Resend pra confirmar persistência e envio reais.
+- **Estado (01/09/2026):** projeto Supabase real criado (tabelas + RPC rodadas via SQL, confirmadas por SSH), env vars Supabase e Resend configuradas na Hostinger (key do Supabase no formato novo `sb_secret_…`), domínio verificado no Resend, deploy de produção concluído. **`POST /api/diagnostico` ainda responde 503 em produção** — persistência falhando, causa raiz da conexão backend↔Supabase sob investigação. Instrumentação de log publicada (commit `97de1b4`: `supabase_insert_failed` / `supabase_client_absent` / `rate_limit_degraded` + `site/scripts/supabase-doctor.mjs`), aguardando deploy pra revelar a causa. **Quality Gate segue REPROVADO** até validar persistência + e-mail reais end-to-end.
 - Consentimento LGPD obrigatório no envio, com link pra `/politica-de-privacidade`.
 
 ## Regra de credibilidade (crítica)
@@ -61,9 +62,9 @@
 
 ## Pendências reais (não bloqueiam a entrega, mas precisam de ação humana)
 
-- Número de WhatsApp comercial definitivo
-- Projeto Supabase real (URL + service role key) — persistência dos diagnósticos + rate limit compartilhado; rodar os dois blocos de SQL de `site/src/lib/supabase.ts`. Sem ele, `/api/diagnostico` dá 503 em produção
-- Conta Resend + `RESEND_API_KEY` + `DIAGNOSTIC_NOTIFICATION_EMAIL` (fase de teste: rafaviriato@hotmail.com) pra a notificação por e-mail de novo diagnóstico. Depois: 1 checagem real controlada (ver `site/README.md`)
+- Número de WhatsApp comercial: **definido** (01/09/2026) — `5561999256901` / `(61) 99925-6901`, já no `.env.local`. Falta setar a env var `NEXT_PUBLIC_WHATSAPP_NUMBER` na produção da Hostinger + redeploy (é build-time)
+- Projeto Supabase: **criado** — tabelas `diagnosticos` + `diagnostico_rate_limit` + RPC rodadas via SQL (confirmadas por SSH), `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (formato novo `sb_secret_…`) na Hostinger. **Mas `/api/diagnostico` ainda dá 503 em produção** — causa raiz da conexão sob investigação (ver "Estado (01/09/2026)" acima), não é mais tarefa de setup
+- Resend: `RESEND_API_KEY` + `DIAGNOSTIC_NOTIFICATION_EMAIL` (fase de teste: rafaviriato@hotmail.com) + `DIAGNOSTIC_NOTIFICATION_FROM` **configurados** na Hostinger, domínio `noryosinovacoes.com.br` **verificado** no Resend. Falta a checagem real controlada (ver `site/README.md`) — bloqueada pelo 503 (e-mail só dispara depois da persistência)
 - IDs de GA4 / GTM / Meta Pixel
 - Confirmação do nome usado em `/sobre` (assumi "Rafael Viriato" a partir do ambiente do projeto — confirmar se está correto antes de publicar)
-- Deploy (Vercel, Hostinger ou outro) e apontamento do domínio noryosinovacoes.com.br
+- Deploy e domínio: **feito** — deploy de produção na Hostinger Web Apps concluído, `noryosinovacoes.com.br` no ar (deploy automático a partir do `main`; ainda exige purge manual de CDN no hPanel a cada versão)
