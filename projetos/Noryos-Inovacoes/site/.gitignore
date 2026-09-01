@@ -27,6 +27,9 @@
 # production
 /build
 
+# persistência fallback local do Diagnóstico (só quando Supabase não está configurado)
+/.data/
+
 # misc
 .DS_Store
 *.pem

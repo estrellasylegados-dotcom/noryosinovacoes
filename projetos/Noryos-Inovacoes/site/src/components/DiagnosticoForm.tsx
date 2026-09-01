@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { diagnosticoSteps } from "@/app/diagnostico/schema";
-import { submitDiagnostico } from "@/app/diagnostico/actions";
 import { Button } from "./ui/Button";
+
+const ENDPOINT = "/api/diagnostico";
 
 type FormState = Record<string, string | boolean>;
 
@@ -50,6 +51,9 @@ export function DiagnosticoForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [startedAt] = useState(() => Date.now());
+  // Trava de reentrada: cobre o intervalo entre o clique e o setState de
+  // "submitting" (duplo clique muito rápido não passa pelo disabled).
+  const inFlight = useRef(false);
 
   const isLastStep = step === diagnosticoSteps.length - 1;
   const currentStep = diagnosticoSteps[step];
@@ -74,21 +78,32 @@ export function DiagnosticoForm() {
       return;
     }
     if (!validateStep()) return;
+    if (inFlight.current || status === "submitting" || status === "success") return;
 
+    inFlight.current = true;
     setStatus("submitting");
     setErrorMsg("");
 
-    const result = await submitDiagnostico({
-      ...(values as unknown as Record<string, string>),
-      consentimento: true,
-      startedAt,
-    } as never);
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...values, consentimento: true, startedAt }),
+      });
 
-    if (result.ok) {
-      setStatus("success");
-    } else {
+      const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+
+      if (res.ok && data?.ok) {
+        setStatus("success");
+      } else {
+        setStatus("error");
+        setErrorMsg(data?.error || "Não conseguimos enviar agora. Tente novamente em instantes.");
+      }
+    } catch {
       setStatus("error");
-      setErrorMsg(result.error);
+      setErrorMsg("Falha de conexão. Verifique sua internet e tente novamente.");
+    } finally {
+      inFlight.current = false;
     }
   }
 

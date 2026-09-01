@@ -52,5 +52,46 @@ export function getSupabaseServerClient(): SupabaseClient | null {
  *   score integer,
  *   resultado jsonb
  * );
+ *
+ * -- Rate limit compartilhado do endpoint /api/diagnostico (ver src/lib/rate-limit.ts).
+ * -- Janela fixa, atômica por linha (`for update`) — funciona com múltiplas
+ * -- instâncias e sobrevive a restart do processo.
+ *
+ * create table if not exists diagnostico_rate_limit (
+ *   key text primary key,
+ *   hits integer not null default 0,
+ *   window_start timestamptz not null default now()
+ * );
+ *
+ * create or replace function diagnostico_check_rate_limit(
+ *   p_key text, p_max integer, p_window_seconds integer
+ * ) returns table (allowed boolean, retry_after integer)
+ * language plpgsql as $$
+ * declare
+ *   rec diagnostico_rate_limit%rowtype;
+ * begin
+ *   insert into diagnostico_rate_limit (key) values (p_key)
+ *     on conflict (key) do nothing;
+ *   select * into rec from diagnostico_rate_limit where key = p_key for update;
+ *
+ *   if now() - rec.window_start >= make_interval(secs => p_window_seconds) then
+ *     update diagnostico_rate_limit set hits = 1, window_start = now() where key = p_key;
+ *     return query select true, 0; return;
+ *   end if;
+ *
+ *   if rec.hits >= p_max then
+ *     return query select false,
+ *       greatest(1, ceil(extract(epoch from
+ *         (rec.window_start + make_interval(secs => p_window_seconds) - now())))::integer);
+ *     return;
+ *   end if;
+ *
+ *   update diagnostico_rate_limit set hits = rec.hits + 1 where key = p_key;
+ *   return query select true, 0;
+ * end;
+ * $$;
+ *
+ * -- opcional: limpeza periódica das janelas vencidas
+ * -- delete from diagnostico_rate_limit where window_start < now() - interval '1 day';
  */
 export const DIAGNOSTICOS_TABLE = "diagnosticos";

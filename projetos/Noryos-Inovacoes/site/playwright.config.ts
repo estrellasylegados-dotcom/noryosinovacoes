@@ -51,5 +51,20 @@ export default defineConfig({
     timeout: 120_000,
     stdout: "pipe",
     stderr: "pipe",
+    /**
+     * Ambiente do servidor sob teste. Nada de e-mail real nem Supabase real:
+     * - provedor de e-mail `mock` grava em .data/diagnostico.email-mock.jsonl
+     * - fallback local de persistência liberado explicitamente (o servidor
+     *   roda em NODE_ENV=production via `next start`)
+     * - rate limit apertado (3 req / 3 s) pra os testes exercitarem bloqueio
+     *   e expiração sem esperar 10 min
+     */
+    env: {
+      DIAGNOSTIC_EMAIL_PROVIDER: "mock",
+      DIAGNOSTIC_NOTIFICATION_EMAIL: "qa-inbox@noryos.test",
+      DIAGNOSTIC_ALLOW_FILE_FALLBACK: "1",
+      DIAGNOSTIC_RATELIMIT_MAX: "3",
+      DIAGNOSTIC_RATELIMIT_WINDOW_MS: "3000",
+    },
   },
 });
