@@ -22,8 +22,22 @@ export function getSupabaseServerClient(): SupabaseClient | null {
     return cached;
   }
 
+  // A env continua se chamando SUPABASE_SERVICE_ROLE_KEY por compatibilidade,
+  // mas o VALOR pode ser tanto a JWT service_role legada quanto uma Secret API
+  // Key nova (`sb_secret_…`). Ambas são aceitas: nada aqui valida o formato — a
+  // string é repassada como está e quem decide a validade é o servidor Supabase.
+  // O `@supabase/supabase-js` (>= 2.x) já reconhece `sb_secret_…`. Só avisamos,
+  // sem vazar o valor, se o formato for claramente o de uma chave de client.
+  if (serviceRoleKey.startsWith("sb_publishable_") || serviceRoleKey.startsWith("anon")) {
+    console.error(
+      "[supabase] SUPABASE_SERVICE_ROLE_KEY parece ser uma chave de CLIENT (publishable/anon), " +
+        "não uma credencial server-side (service_role JWT ou sb_secret_…). RLS vai bloquear as escritas."
+    );
+  }
+
   cached = createClient(url, serviceRoleKey, {
-    auth: { persistSession: false },
+    // Cliente administrativo server-side: sem sessão, sem refresh, sem parsing de URL.
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   return cached;
 }

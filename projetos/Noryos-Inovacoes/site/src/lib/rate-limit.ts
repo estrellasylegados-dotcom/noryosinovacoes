@@ -71,11 +71,16 @@ function checkRateLimitInMemory(key: string, now = Date.now()): RateResult {
 
 // --- Backend Supabase (compartilhado) ---
 let degradedWarned = false;
-function warnDegradedOnce(reason: string) {
+function warnDegradedOnce(reason: string, detail?: Record<string, unknown>) {
   if (degradedWarned) return;
   degradedWarned = true;
   console.warn(
-    `[diagnostico] rate limit compartilhado indisponível (${reason}) — usando fallback em memória (não compartilhado entre instâncias/restart).`
+    "[diagnostico] rate_limit_degraded",
+    JSON.stringify({
+      reason,
+      ...detail,
+      efeito: "usando fallback em memória (não compartilhado entre instâncias/restart)",
+    })
   );
 }
 
@@ -92,7 +97,14 @@ async function checkRateLimitShared(key: string): Promise<RateResult | null> {
 
     const row = Array.isArray(data) ? data[0] : data;
     if (error || !row || typeof row.allowed !== "boolean") {
-      warnDegradedOnce(error ? `rpc_error:${error.code ?? "sem_codigo"}` : "rpc_sem_resposta");
+      const e = (error ?? null) as { code?: string; message?: string; hint?: string; status?: number } | null;
+      warnDegradedOnce(error ? "rpc_error" : "rpc_sem_resposta", {
+        step: "rpc:diagnostico_check_rate_limit",
+        code: e?.code ?? null,
+        status: e?.status ?? null,
+        message: (e?.message ?? "").slice(0, 300) || null,
+        hint: (e?.hint ?? "").slice(0, 200) || null,
+      });
       return null;
     }
     return row.allowed

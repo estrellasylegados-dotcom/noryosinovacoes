@@ -68,10 +68,23 @@ export async function persistDiagnostico(data: DiagnosticoInput): Promise<Persis
       .single();
 
     if (error || !inserted) {
-      // Mensagem do Supabase pode conter detalhe de schema — logamos curto,
-      // sem PII, e devolvemos genérico pra cima. NÃO cai pro fallback: uma
-      // falha de persistência em produção tem que virar erro controlado.
-      console.error("[diagnostico] insert Supabase falhou:", error?.code ?? "sem_codigo");
+      // Log técnico p/ diagnosticar a causa (ver scripts/supabase-doctor.mjs).
+      // NÃO contém PII do lead: code/status/message/hint do PostgREST são de
+      // schema/permissão; `details` pode ecoar valor de constraint, então vai
+      // sanitizado. NÃO cai pro fallback: falha de persistência em produção
+      // tem que virar erro controlado.
+      const e = (error ?? {}) as { code?: string; message?: string; hint?: string; details?: string; status?: number };
+      console.error(
+        "[diagnostico] supabase_insert_failed",
+        JSON.stringify({
+          step: "insert:diagnosticos",
+          code: e.code ?? null,
+          status: e.status ?? null,
+          message: (e.message ?? "").slice(0, 300) || null,
+          hint: (e.hint ?? "").slice(0, 200) || null,
+          details: (e.details ?? "").replace(/=\([^)]*\)/g, "=(<redacted>)").slice(0, 200) || null,
+        })
+      );
       return { ok: false, error: "persist_failed", driver: "supabase" };
     }
 
@@ -86,7 +99,13 @@ export async function persistDiagnostico(data: DiagnosticoInput): Promise<Persis
   if (!FILE_FALLBACK_ALLOWED) {
     // Produção sem Supabase e sem opt-in explícito: não inventa armazenamento.
     console.error(
-      "[diagnostico] Supabase não configurado em produção e fallback local desabilitado — persistência indisponível."
+      "[diagnostico] supabase_client_absent",
+      JSON.stringify({
+        step: "getSupabaseServerClient",
+        reason: "SUPABASE_URL e/ou SUPABASE_SERVICE_ROLE_KEY ausentes ou não carregadas pelo processo",
+        SUPABASE_URL_present: Boolean(process.env.SUPABASE_URL),
+        SUPABASE_SERVICE_ROLE_KEY_present: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+      })
     );
     return { ok: false, error: "persist_unavailable", driver: "supabase" };
   }
