@@ -143,6 +143,35 @@ export async function expectContentRevealed(page: Page, label = "") {
   await page.locator("footer").scrollIntoViewIfNeeded();
   await expect(page.locator("footer")).toBeVisible();
 }
+/**
+ * A verificação do Cloudflare Turnstile é OBRIGATÓRIA no `POST /api/diagnostico`
+ * (ver `src/lib/turnstile.ts`). Nos testes de browser o widget não é
+ * renderizado (sem `NEXT_PUBLIC_TURNSTILE_SITE_KEY` no build de teste), então
+ * este helper injeta um `turnstileToken` válido no corpo do POST — o servidor
+ * sob teste roda com `TURNSTILE_MODE=mock`, que aceita qualquer token com
+ * "pass". Chamar ANTES de submeter o formulário.
+ *
+ * Os caminhos "token ausente / inválido → 403" são cobertos direto no
+ * endpoint por `diagnostico-api.spec.ts`, sem browser.
+ */
+export async function attachTurnstileToken(
+  page: Page,
+  opts: { token?: string; delayMs?: number } = {}
+) {
+  const { token = "pass", delayMs = 0 } = opts;
+  await page.route("**/api/diagnostico", async (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
+    let body: Record<string, unknown> = {};
+    try {
+      body = JSON.parse(route.request().postData() ?? "{}");
+    } catch {
+      return route.continue();
+    }
+    await route.continue({ postData: JSON.stringify({ ...body, turnstileToken: token }) });
+  });
+}
+
 export async function evidenceShot(page: Page, testInfo: TestInfo, name: string) {
   const file = path.join(EVIDENCE_DIR, `${name}.png`);
   await page.screenshot({ path: file, fullPage: true });

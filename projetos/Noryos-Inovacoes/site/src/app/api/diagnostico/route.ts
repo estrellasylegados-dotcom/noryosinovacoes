@@ -4,15 +4,21 @@ import { diagnosticoSchema, type DiagnosticoInput } from "@/app/diagnostico/sche
 import { persistDiagnostico } from "@/lib/diagnostico-store";
 import { sendDiagnosticoNotification, type EmailStatus } from "@/lib/email";
 import { enforceRateLimit, getDedup, setDedup } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 /**
  * POST /api/diagnostico — endpoint do Diagnóstico Digital Noryos.
  *
  * Pipeline (nessa ordem, ver briefing → seções ANTI-SPAM / DUPLICIDADE):
  *   método → Content-Type → tamanho do payload → JSON válido → honeypot →
- *   tempo mínimo de preenchimento → rate limit por IP → validação (zod) →
- *   sanitização → dedupe → PERSISTÊNCIA → (só então) NOTIFICAÇÃO por e-mail →
- *   resposta de sucesso.
+ *   tempo mínimo de preenchimento → rate limit por origem (2 janelas:
+ *   3/15min + 10/24h) → Cloudflare Turnstile (obrigatório, server-side) →
+ *   validação (zod) → sanitização → dedupe → PERSISTÊNCIA → (só então)
+ *   NOTIFICAÇÃO por e-mail → resposta de sucesso.
+ *
+ * Turnstile é verificado ANTES de qualquer persistência ou e-mail: sem um
+ * token que a Cloudflare confirme, o endpoint responde 403 e nada é gravado
+ * nem notificado. O frontend não é a fonte de verdade.
  *
  * Uma requisição classificada como spam NÃO persiste e NÃO dispara e-mail.
  * Se o e-mail falhar depois do lead salvo, o lead permanece (resposta
@@ -28,6 +34,7 @@ const MIN_FILL_TIME_MS = 2500;
 type SubmitPayload = Partial<Record<keyof DiagnosticoInput, unknown>> & {
   website?: unknown; // honeypot
   startedAt?: unknown;
+  turnstileToken?: unknown; // Cloudflare Turnstile — verificado server-side
 };
 
 type ApiOk = { ok: true; id: string; email: EmailStatus["status"]; duplicate?: true };
@@ -146,7 +153,8 @@ export async function POST(request: Request): Promise<Response> {
     return json({ ok: true, id: "", email: "skipped" });
   }
 
-  // 6. Rate limit por IP (backend compartilhado via Supabase; fallback em memória)
+  // 6. Rate limit por origem — DUAS janelas (3/15min + 10/24h). Backend
+  //    compartilhado via Supabase; fallback em memória. Ver src/lib/rate-limit.ts.
   const ip = clientIp(request);
   const rate = await enforceRateLimit(`diagnostico:${ip}`);
   if (!rate.ok) {
@@ -156,14 +164,25 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // 7. Validação server-side (zod), sobre os dados já sanitizados
+  // 7. Cloudflare Turnstile — verificação OBRIGATÓRIA server-side. Sem um
+  //    token que a Cloudflare confirme, responde 403 e NÃO persiste nem
+  //    envia e-mail. O TURNSTILE_SECRET_KEY nunca sai do servidor.
+  const turnstile = await verifyTurnstileToken(payload.turnstileToken, ip);
+  if (!turnstile.ok) {
+    return json(
+      { ok: false, error: "Não foi possível confirmar a verificação de segurança. Recarregue a página e tente novamente." },
+      { status: 403 }
+    );
+  }
+
+  // 8. Validação server-side (zod), sobre os dados já sanitizados
   const parsed = diagnosticoSchema.safeParse(sanitizeInput(payload as Record<string, unknown>));
   if (!parsed.success) {
     return json({ ok: false, error: "Alguns dados não são válidos. Revise o formulário." }, { status: 400 });
   }
   const data = parsed.data;
 
-  // 8. Dedupe — duplo clique / retry rápido devolvem o mesmo resultado,
+  // 9. Dedupe — duplo clique / retry rápido devolvem o mesmo resultado,
   //    sem novo insert e sem novo e-mail.
   const dedupKey =
     "diagnostico:" +
@@ -173,7 +192,7 @@ export async function POST(request: Request): Promise<Response> {
   const cached = getDedup<ApiOk>(dedupKey);
   if (cached) return json({ ...cached, duplicate: true });
 
-  // 9. PERSISTÊNCIA (antes do e-mail)
+  // 10. PERSISTÊNCIA (antes do e-mail)
   const persisted = await persistDiagnostico(data);
   if (!persisted.ok) {
     return json(
@@ -183,7 +202,7 @@ export async function POST(request: Request): Promise<Response> {
   }
   const { id } = persisted.record;
 
-  // 10. NOTIFICAÇÃO — só depois do lead salvo. Falha aqui NÃO perde o lead.
+  // 11. NOTIFICAÇÃO — só depois do lead salvo. Falha aqui NÃO perde o lead.
   const receivedAt = new Date(persisted.record.createdAt);
   let email: EmailStatus;
   try {
@@ -203,7 +222,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // 11. Sucesso — guarda no dedupe e responde.
+  // 12. Sucesso — guarda no dedupe e responde.
   const result: ApiOk = { ok: true, id, email: email.status };
   setDedup(dedupKey, result);
   return json(result);

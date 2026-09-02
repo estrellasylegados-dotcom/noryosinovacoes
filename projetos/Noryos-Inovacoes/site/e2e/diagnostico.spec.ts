@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
-import { watchConsole } from "./helpers";
+import { watchConsole, attachTurnstileToken } from "./helpers";
 
 /**
  * A maior parte dos casos vai só até o botão de envio habilitado (sem
@@ -154,12 +154,10 @@ test.describe("Diagnóstico Digital", () => {
     const empresa = `TESTE NORYOS QA E2E ${Date.now()}`;
     await page.setExtraHTTPHeaders({ "x-forwarded-for": "198.51.100.21" });
 
-    // Atrasa a resposta da API pra o estado de loading ser observável de forma
-    // determinística (o servidor local responde rápido demais).
-    await page.route("**/api/diagnostico", async (route) => {
-      await new Promise((r) => setTimeout(r, 800));
-      await route.continue();
-    });
+    // Injeta o turnstileToken no POST (widget não renderiza sem site key no
+    // build de teste; servidor em TURNSTILE_MODE=mock aceita "pass") e atrasa
+    // 800 ms pra o estado de loading ser observável de forma determinística.
+    await attachTurnstileToken(page, { delayMs: 800 });
 
     await page.goto("/diagnostico");
     await preencherTudo(page, empresa);
@@ -198,6 +196,7 @@ test.describe("Diagnóstico Digital", () => {
   test("duplo clique no envio não gera segundo registro nem segundo e-mail", async ({ page }) => {
     const empresa = `TESTE NORYOS QA DUP-E2E ${Date.now()}`;
     await page.setExtraHTTPHeaders({ "x-forwarded-for": "198.51.100.22" });
+    await attachTurnstileToken(page);
 
     await page.goto("/diagnostico");
     await preencherTudo(page, empresa);
@@ -221,6 +220,7 @@ test.describe("Diagnóstico Digital — mobile 390px", () => {
     const console_ = watchConsole(page);
     const empresa = `TESTE NORYOS QA MOBILE ${Date.now()}`;
     await page.setExtraHTTPHeaders({ "x-forwarded-for": "198.51.100.23" });
+    await attachTurnstileToken(page);
 
     await page.goto("/diagnostico");
 

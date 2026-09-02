@@ -4,14 +4,20 @@ import { getSupabaseServerClient } from "@/lib/supabase";
  * Rate limit compartilhado do endpoint do Diagnóstico + deduplicação de
  * submissões.
  *
- * ## Rate limit
+ * ## Rate limit — DUAS janelas por origem
  *
- * Janela fixa por chave (tipicamente o IP). Dois backends:
+ * Cada submissão é checada contra duas janelas fixas, ambas na mesma chave
+ * de origem (tipicamente o IP). A primeira que estourar devolve 429:
+ *
+ * - **curta** — default **3 envios / 15 min** (`DIAGNOSTIC_RATELIMIT_SHORT_*`)
+ * - **longa** — default **10 envios / 24 h** (`DIAGNOSTIC_RATELIMIT_LONG_*`)
+ *
+ * Dois backends, escolhidos por janela:
  *
  * 1. **Supabase** (`diagnostico_check_rate_limit` RPC) — quando o projeto
  *    Supabase está configurado. Compartilhado entre instâncias e sobrevive a
- *    restart do processo. É o alvo de produção. Ver o DDL em
- *    `src/lib/supabase.ts`.
+ *    restart do processo. É o alvo de produção. Cada janela é uma linha
+ *    própria (`<chave>:15m`, `<chave>:24h`). Ver o DDL em `src/lib/supabase.ts`.
  * 2. **Memória do processo** (`Map`) — fallback quando o Supabase não está
  *    configurado (dev/teste) ou quando a RPC falha. Um `console.warn` único
  *    avisa que o rate limit está degradado (não compartilhado).
@@ -27,9 +33,27 @@ import { getSupabaseServerClient } from "@/lib/supabase";
  * tabela do Supabase.
  */
 
-// --- Config (overrides por env, úteis pra testar expiração rápido) ---
-export const RATE_LIMIT_MAX = numFromEnv("DIAGNOSTIC_RATELIMIT_MAX", 5);
-export const RATE_LIMIT_WINDOW_MS = numFromEnv("DIAGNOSTIC_RATELIMIT_WINDOW_MS", 10 * 60 * 1000);
+// --- Config das janelas (overrides por env, úteis pra testar expiração rápido) ---
+// `DIAGNOSTIC_RATELIMIT_MAX` / `_WINDOW_MS` (nomes legados, janela única) ainda
+// são aceitos como fallback da janela curta, pra não quebrar infra existente.
+const LEGACY_MAX = numFromEnv("DIAGNOSTIC_RATELIMIT_MAX", 3);
+const LEGACY_WINDOW_MS = numFromEnv("DIAGNOSTIC_RATELIMIT_WINDOW_MS", 15 * 60 * 1000);
+
+export type RateWindowConfig = { suffix: string; max: number; windowMs: number };
+
+export const RATE_LIMIT_WINDOWS: RateWindowConfig[] = [
+  {
+    suffix: "15m",
+    max: numFromEnv("DIAGNOSTIC_RATELIMIT_SHORT_MAX", LEGACY_MAX),
+    windowMs: numFromEnv("DIAGNOSTIC_RATELIMIT_SHORT_WINDOW_MS", LEGACY_WINDOW_MS),
+  },
+  {
+    suffix: "24h",
+    max: numFromEnv("DIAGNOSTIC_RATELIMIT_LONG_MAX", 10),
+    windowMs: numFromEnv("DIAGNOSTIC_RATELIMIT_LONG_WINDOW_MS", 24 * 60 * 60 * 1000),
+  },
+];
+
 export const DEDUP_TTL_MS = 2 * 60 * 1000; // 2 min
 
 function numFromEnv(name: string, fallback: number): number {
@@ -54,15 +78,15 @@ function sweep(now: number) {
   }
 }
 
-function checkRateLimitInMemory(key: string, now = Date.now()): RateResult {
+function checkWindowInMemory(key: string, max: number, windowMs: number, now = Date.now()): RateResult {
   sweep(now);
   const hit = rateBuckets.get(key);
 
   if (!hit || hit.resetAt <= now) {
-    rateBuckets.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
     return { ok: true };
   }
-  if (hit.count >= RATE_LIMIT_MAX) {
+  if (hit.count >= max) {
     return { ok: false, retryAfterSec: Math.max(1, Math.ceil((hit.resetAt - now) / 1000)) };
   }
   hit.count += 1;
@@ -84,15 +108,15 @@ function warnDegradedOnce(reason: string, detail?: Record<string, unknown>) {
   );
 }
 
-async function checkRateLimitShared(key: string): Promise<RateResult | null> {
+async function checkWindowShared(key: string, max: number, windowMs: number): Promise<RateResult | null> {
   const supabase = getSupabaseServerClient();
   if (!supabase) return null;
 
   try {
     const { data, error } = await supabase.rpc("diagnostico_check_rate_limit", {
       p_key: key,
-      p_max: RATE_LIMIT_MAX,
-      p_window_seconds: Math.ceil(RATE_LIMIT_WINDOW_MS / 1000),
+      p_max: max,
+      p_window_seconds: Math.ceil(windowMs / 1000),
     });
 
     const row = Array.isArray(data) ? data[0] : data;
@@ -116,13 +140,23 @@ async function checkRateLimitShared(key: string): Promise<RateResult | null> {
   }
 }
 
+/** Uma janela: tenta o backend compartilhado; se não houver ou falhar, memória. */
+async function checkWindow(key: string, max: number, windowMs: number): Promise<RateResult> {
+  const shared = await checkWindowShared(key, max, windowMs);
+  return shared ?? checkWindowInMemory(key, max, windowMs);
+}
+
 /**
- * Ponto de entrada único. Tenta o backend compartilhado (Supabase); se não
- * houver ou falhar, cai pro backend em memória.
+ * Ponto de entrada único. Checa `baseKey` contra TODAS as janelas de
+ * `RATE_LIMIT_WINDOWS` (curta primeiro). Devolve o primeiro 429 encontrado;
+ * `{ ok: true }` só se todas as janelas permitirem.
  */
-export async function enforceRateLimit(key: string): Promise<RateResult> {
-  const shared = await checkRateLimitShared(key);
-  return shared ?? checkRateLimitInMemory(key);
+export async function enforceRateLimit(baseKey: string): Promise<RateResult> {
+  for (const w of RATE_LIMIT_WINDOWS) {
+    const res = await checkWindow(`${baseKey}:${w.suffix}`, w.max, w.windowMs);
+    if (!res.ok) return res;
+  }
+  return { ok: true };
 }
 
 // --- Deduplicação (em memória) ---

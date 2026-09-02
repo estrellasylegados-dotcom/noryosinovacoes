@@ -98,6 +98,9 @@ Sem prefixo `NEXT_PUBLIC_` = fica só no servidor (nunca vai pro browser).
 | `NEXT_PUBLIC_LINKEDIN_URL` | opcional | footer / structured data |
 | `SUPABASE_URL` | URL do projeto Supabase | sem isso o form valida mas não persiste |
 | `SUPABASE_SERVICE_ROLE_KEY` | service role key | **secreta — nunca commitar, nunca `NEXT_PUBLIC_`** |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | site key do widget Turnstile | **obrigatória** — público, vai pro browser |
+| `TURNSTILE_SECRET_KEY` | secret do widget Turnstile | **secreta — nunca `NEXT_PUBLIC_`.** Sem ela o endpoint responde 403 e o form não envia |
+| `DIAGNOSTIC_RATELIMIT_SHORT_MAX` / `_SHORT_WINDOW_MS` / `_LONG_MAX` / `_LONG_WINDOW_MS` | opcional | overrides das 2 janelas de rate limit (default 3/15min + 10/24h) |
 | `NEXT_PUBLIC_GA4_ID` / `NEXT_PUBLIC_GTM_ID` / `NEXT_PUBLIC_META_PIXEL_ID` | quando existirem | analytics ainda não injetado no layout |
 
 ## Checklist antes do primeiro deploy
@@ -111,7 +114,9 @@ Sem prefixo `NEXT_PUBLIC_` = fica só no servidor (nunca vai pro browser).
 ## Verificação pós-deploy
 
 1. Abrir `https://noryosinovacoes.com.br` — home carrega, SSL válido.
-2. `/diagnostico` — enviar o formulário de teste e conferir se:
+2. `/diagnostico` — completar as 5 etapas e conferir se:
+   - o widget do Cloudflare Turnstile aparece na última etapa e resolve;
+   - o envio conclui (sem token válido o endpoint responde 403);
    - com Supabase configurado: a linha aparece na tabela `diagnosticos`;
    - sem Supabase: retorna sucesso e loga o aviso no log do app.
 3. `/sitemap.xml` e `/robots.txt` respondem.

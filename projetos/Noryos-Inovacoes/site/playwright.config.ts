@@ -56,15 +56,26 @@ export default defineConfig({
      * - provedor de e-mail `mock` grava em .data/diagnostico.email-mock.jsonl
      * - fallback local de persistência liberado explicitamente (o servidor
      *   roda em NODE_ENV=production via `next start`)
-     * - rate limit apertado (3 req / 3 s) pra os testes exercitarem bloqueio
-     *   e expiração sem esperar 10 min
+     * - rate limit apertado nas duas janelas (curta 3 / 2,5 s, longa 5 / 12 s)
+     *   pra os testes exercitarem bloqueio e expiração de cada uma sem esperar
+     *   15 min / 24 h
+     * - Turnstile em modo `mock`: o resultado vem do próprio token (contém
+     *   "pass" ou o dummy da Cloudflare = ok; ausente/qualquer outro = falha).
+     *   Nenhuma chamada de rede à Cloudflare. O widget do formulário NÃO é
+     *   renderizado nos testes (sem NEXT_PUBLIC_TURNSTILE_SITE_KEY no build);
+     *   os testes de browser injetam o token no POST (ver
+     *   `attachTurnstileToken` em e2e/helpers.ts) e os de contrato mandam o
+     *   token direto no corpo.
      */
     env: {
       DIAGNOSTIC_EMAIL_PROVIDER: "mock",
       DIAGNOSTIC_NOTIFICATION_EMAIL: "qa-inbox@noryos.test",
       DIAGNOSTIC_ALLOW_FILE_FALLBACK: "1",
-      DIAGNOSTIC_RATELIMIT_MAX: "3",
-      DIAGNOSTIC_RATELIMIT_WINDOW_MS: "3000",
+      DIAGNOSTIC_RATELIMIT_SHORT_MAX: "3",
+      DIAGNOSTIC_RATELIMIT_SHORT_WINDOW_MS: "2500",
+      DIAGNOSTIC_RATELIMIT_LONG_MAX: "5",
+      DIAGNOSTIC_RATELIMIT_LONG_WINDOW_MS: "12000",
+      TURNSTILE_MODE: "mock",
     },
   },
 });

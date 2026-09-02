@@ -1,10 +1,35 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import Script from "next/script";
 import { diagnosticoSteps } from "@/app/diagnostico/schema";
 import { Button } from "./ui/Button";
 
 const ENDPOINT = "/api/diagnostico";
+const TURNSTILE_SCRIPT = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+
+type TurnstileApi = {
+  render: (
+    el: HTMLElement,
+    opts: {
+      sitekey: string;
+      callback: (token: string) => void;
+      "error-callback"?: () => void;
+      "expired-callback"?: () => void;
+      "timeout-callback"?: () => void;
+      theme?: "auto" | "light" | "dark";
+      action?: string;
+    }
+  ) => string;
+  reset: (id?: string) => void;
+  remove: (id?: string) => void;
+};
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
 
 type FormState = Record<string, string | boolean>;
 
@@ -45,7 +70,18 @@ const fieldLabels: Record<string, string> = {
 const requiredFields = new Set(["nomeEmpresa", "responsavel", "whatsapp"]);
 const textareaFields = new Set(["comoConquistaClientes", "dificuldade", "objetivo", "observacoes"]);
 
-export function DiagnosticoForm() {
+/**
+ * `turnstileSiteKey` é o site key PÚBLICO do Cloudflare Turnstile, lido no
+ * servidor (Server Component `diagnostico/page.tsx`) e repassado aqui — só o
+ * frontend usa. A validação de verdade acontece no servidor
+ * (`/api/diagnostico` → `src/lib/turnstile.ts`) com o `TURNSTILE_SECRET_KEY`,
+ * que nunca é exposto ao cliente.
+ *
+ * Vazio (ambiente sem Turnstile configurado) → o widget não é renderizado e
+ * o envio não é bloqueado no cliente; o servidor decide (em produção sem
+ * secret, responde 403; em dev, pula a checagem com WARN).
+ */
+export function DiagnosticoForm({ turnstileSiteKey = "" }: { turnstileSiteKey?: string }) {
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<FormState>(initialState);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -57,6 +93,49 @@ export function DiagnosticoForm() {
 
   const isLastStep = step === diagnosticoSteps.length - 1;
   const currentStep = diagnosticoSteps[step];
+
+  // --- Cloudflare Turnstile (só na última etapa, quando o site key existe) ---
+  const turnstileEnabled = turnstileSiteKey !== "";
+  const turnstileMountRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
+  const [scriptReady, setScriptReady] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState(false);
+
+  const renderTurnstile = useCallback(() => {
+    if (!turnstileEnabled || !window.turnstile || !turnstileMountRef.current) return;
+    if (turnstileWidgetId.current !== null) return; // já renderizado
+    turnstileWidgetId.current = window.turnstile.render(turnstileMountRef.current, {
+      sitekey: turnstileSiteKey,
+      action: "diagnostico",
+      callback: (token) => {
+        setTurnstileToken(token);
+        setTurnstileError(false);
+      },
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => {
+        setTurnstileToken("");
+        setTurnstileError(true);
+      },
+      "timeout-callback": () => setTurnstileToken(""),
+    });
+  }, [turnstileEnabled, turnstileSiteKey]);
+
+  // Renderiza quando chega na última etapa e o script já está pronto; remove
+  // o widget ao sair da etapa (ou desmontar) pra não vazar instância.
+  useEffect(() => {
+    if (!turnstileEnabled) return;
+    if (isLastStep && (scriptReady || window.turnstile)) renderTurnstile();
+    return () => {
+      if (turnstileWidgetId.current !== null && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetId.current);
+        turnstileWidgetId.current = null;
+        setTurnstileToken("");
+      }
+    };
+  }, [turnstileEnabled, isLastStep, scriptReady, renderTurnstile]);
+
+  const turnstileSatisfied = !turnstileEnabled || turnstileToken !== "";
 
   function update(field: string, value: string | boolean) {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -78,6 +157,11 @@ export function DiagnosticoForm() {
       return;
     }
     if (!validateStep()) return;
+    if (!turnstileSatisfied) {
+      setStatus("error");
+      setErrorMsg("Confirme a verificação de segurança abaixo antes de enviar.");
+      return;
+    }
     if (inFlight.current || status === "submitting" || status === "success") return;
 
     inFlight.current = true;
@@ -88,7 +172,7 @@ export function DiagnosticoForm() {
       const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, consentimento: true, startedAt }),
+        body: JSON.stringify({ ...values, consentimento: true, startedAt, turnstileToken }),
       });
 
       const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
@@ -98,6 +182,11 @@ export function DiagnosticoForm() {
       } else {
         setStatus("error");
         setErrorMsg(data?.error || "Não conseguimos enviar agora. Tente novamente em instantes.");
+        // Token do Turnstile é de uso único — zera e recicla o widget pro retry.
+        if (turnstileEnabled && window.turnstile && turnstileWidgetId.current !== null) {
+          window.turnstile.reset(turnstileWidgetId.current);
+          setTurnstileToken("");
+        }
       }
     } catch {
       setStatus("error");
@@ -201,6 +290,23 @@ export function DiagnosticoForm() {
         })}
       </div>
 
+      {isLastStep && turnstileEnabled && (
+        <div className="mt-6">
+          <Script
+            src={TURNSTILE_SCRIPT}
+            strategy="afterInteractive"
+            onLoad={() => setScriptReady(true)}
+            onReady={() => setScriptReady(true)}
+          />
+          <div ref={turnstileMountRef} className="min-h-[65px]" />
+          {turnstileError && (
+            <p className="mt-2 text-sm text-red-400">
+              A verificação de segurança não carregou. Recarregue a página e tente novamente.
+            </p>
+          )}
+        </div>
+      )}
+
       {status === "error" && <p className="mt-4 text-sm text-red-400">{errorMsg}</p>}
 
       <div className="mt-8 flex items-center justify-between gap-4">
@@ -211,7 +317,11 @@ export function DiagnosticoForm() {
         ) : (
           <span />
         )}
-        <Button type="submit" variant="primary" disabled={status === "submitting"}>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={status === "submitting" || (isLastStep && !turnstileSatisfied)}
+        >
           {status === "submitting" ? "Enviando..." : isLastStep ? "Solicitar meu diagnóstico" : "Continuar"}
         </Button>
       </div>

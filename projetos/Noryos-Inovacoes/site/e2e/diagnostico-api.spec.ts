@@ -7,19 +7,21 @@ import path from "node:path";
  * rate limit e fluxo persistir → notificar.
  *
  * Servidor sob teste (ver playwright.config.ts → webServer.env):
- *   DIAGNOSTIC_EMAIL_PROVIDER=mock        → e-mail vai pra .data/diagnostico.email-mock.jsonl
- *   DIAGNOSTIC_ALLOW_FILE_FALLBACK=1      → persistência no fallback local (sem Supabase)
- *   DIAGNOSTIC_RATELIMIT_MAX=3
- *   DIAGNOSTIC_RATELIMIT_WINDOW_MS=3000
+ *   DIAGNOSTIC_EMAIL_PROVIDER=mock             → e-mail vai pra .data/diagnostico.email-mock.jsonl
+ *   DIAGNOSTIC_ALLOW_FILE_FALLBACK=1           → persistência no fallback local (sem Supabase)
+ *   DIAGNOSTIC_RATELIMIT_SHORT_MAX=3 / _WINDOW_MS=2500   → janela curta
+ *   DIAGNOSTIC_RATELIMIT_LONG_MAX=5  / _WINDOW_MS=12000  → janela longa
+ *   TURNSTILE_MODE=mock                        → token com "pass" (ou o dummy) = ok; ausente/outro = 403
  *
  * Isolamento: cada caso usa um X-Forwarded-For sintético próprio (chave do
  * rate limit) e um nome de empresa único (chave de dedupe). Nenhum e-mail
- * real é enviado.
+ * real é enviado, nenhuma chamada de rede à Cloudflare.
  */
 
 const ENDPOINT = "/api/diagnostico";
-const RL_MAX = 3;
-const RL_WINDOW_MS = 3000;
+const RL_SHORT_MAX = 3;
+const RL_SHORT_WINDOW_MS = 2500;
+const RL_LONG_MAX = 5;
 const EMAIL_MOCK = path.join(process.cwd(), ".data", "diagnostico.email-mock.jsonl");
 const STORE = path.join(process.cwd(), ".data", "diagnostico.local.jsonl");
 
@@ -55,6 +57,7 @@ function basePayload(overrides: Record<string, unknown> = {}) {
       observacoes: "",
       consentimento: true,
       startedAt: Date.now() - 10_000, // passa do tempo mínimo de preenchimento
+      turnstileToken: "pass", // TURNSTILE_MODE=mock aceita qualquer token com "pass"
       ...overrides,
     },
   };
@@ -101,7 +104,12 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
   });
 
   test("formulário vazio é inválido (400)", async ({ request }) => {
-    const res = await post(request, { consentimento: true, startedAt: Date.now() - 10_000 }, "10.1.0.4");
+    // token válido pra passar do Turnstile (checado antes do Zod) e cair no 400 do Zod
+    const res = await post(
+      request,
+      { consentimento: true, startedAt: Date.now() - 10_000, turnstileToken: "pass" },
+      "10.1.0.4"
+    );
     expect(res.status()).toBe(400);
   });
 
@@ -122,6 +130,46 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
     const { body } = basePayload({ consentimento: false });
     const res = await post(request, body, "10.1.0.6");
     expect(res.status()).toBe(400);
+  });
+
+  test("Turnstile: token ausente → 403, sem persistir e sem e-mail", async ({ request }) => {
+    const { empresa, body } = basePayload({ turnstileToken: undefined });
+    const res = await post(request, body, "10.2.0.1");
+    expect(res.status()).toBe(403);
+    const j = await res.json();
+    expect(j.ok).toBe(false);
+    expect(recordsFor(empresa)).toHaveLength(0);
+    expect(emailsFor(empresa)).toHaveLength(0);
+    // nada de secret / internals no corpo
+    expect(JSON.stringify(j)).not.toMatch(/TURNSTILE|secret|siteverify|SUPABASE|RESEND/i);
+  });
+
+  test("Turnstile: token inválido → 403, sem persistir e sem e-mail", async ({ request }) => {
+    const { empresa, body } = basePayload({ turnstileToken: "token-invalido-qualquer" });
+    const res = await post(request, body, "10.2.0.2");
+    expect(res.status()).toBe(403);
+    expect((await res.json()).ok).toBe(false);
+    expect(recordsFor(empresa)).toHaveLength(0);
+    expect(emailsFor(empresa)).toHaveLength(0);
+  });
+
+  test("Turnstile: token válido → 200, persiste 1 registro e 1 e-mail", async ({ request }) => {
+    const { empresa, body } = basePayload({ turnstileToken: "pass" });
+    const res = await post(request, body, "10.2.0.3");
+    expect(res.status()).toBe(200);
+    const j = await res.json();
+    expect(j.ok).toBe(true);
+    expect(j.id).toBeTruthy();
+    expect(recordsFor(empresa)).toHaveLength(1);
+    expect(emailsFor(empresa)).toHaveLength(1);
+  });
+
+  test("Turnstile é checado ANTES da validação Zod (body inválido + token ruim → 403, não 400)", async ({
+    request,
+  }) => {
+    const { body } = basePayload({ turnstileToken: "xxx", nomeEmpresa: "" });
+    const res = await post(request, body, "10.2.0.4");
+    expect(res.status()).toBe(403);
   });
 
   test("honeypot preenchido: ok, mas NÃO persiste e NÃO envia e-mail", async ({ request }) => {
@@ -182,22 +230,43 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
     void empresa;
   });
 
-  test("rate limit: bloqueia após o limite e libera depois da janela", async ({ request }) => {
+  test("rate limit (janela curta): bloqueia após o limite e libera depois da janela", async ({ request }) => {
     const ip = "10.9.9.9";
     const codes: number[] = [];
-    for (let i = 0; i < RL_MAX + 1; i++) {
+    for (let i = 0; i < RL_SHORT_MAX + 1; i++) {
       const { body } = basePayload({ nomeEmpresa: `RL ${Date.now()}-${i}` });
       const res = await post(request, body, ip);
       codes.push(res.status());
     }
-    // primeiras RL_MAX passam, a seguinte é 429
-    expect(codes.slice(0, RL_MAX).every((c) => c === 200)).toBe(true);
-    expect(codes[RL_MAX]).toBe(429);
+    // primeiras RL_SHORT_MAX passam, a seguinte é 429
+    expect(codes.slice(0, RL_SHORT_MAX).every((c) => c === 200)).toBe(true);
+    expect(codes[RL_SHORT_MAX]).toBe(429);
 
-    // espera a janela expirar → usuário legítimo volta a passar
-    await new Promise((r) => setTimeout(r, RL_WINDOW_MS + 800));
+    // espera a janela curta expirar → usuário legítimo volta a passar
+    await new Promise((r) => setTimeout(r, RL_SHORT_WINDOW_MS + 800));
     const { body } = basePayload({ nomeEmpresa: `RL recuperado ${Date.now()}` });
     const again = await post(request, body, ip);
     expect(again.status()).toBe(200);
+  });
+
+  test("rate limit (janela longa): bloqueia acumulado mesmo após a janela curta resetar", async ({ request }) => {
+    const ip = "10.9.5.5";
+    const send = (i: number) => {
+      const { body } = basePayload({ nomeEmpresa: `RL-LONG ${Date.now()}-${i}` });
+      return post(request, body, ip);
+    };
+
+    // 3 envios seguidos: estouram a janela curta (max 3), longa fica em 3.
+    for (let i = 0; i < RL_SHORT_MAX; i++) expect((await send(i)).status()).toBe(200);
+    expect((await send(99)).status()).toBe(429); // curta
+
+    // janela curta expira; a longa NÃO (12 s). Contador longo segue em 3.
+    await new Promise((r) => setTimeout(r, RL_SHORT_WINDOW_MS + 900));
+
+    // mais 2 envios: longa vai a 5 (= RL_LONG_MAX), curta só a 2.
+    for (let i = 0; i < RL_LONG_MAX - RL_SHORT_MAX; i++) expect((await send(100 + i)).status()).toBe(200);
+
+    // o próximo é barrado pela JANELA LONGA (curta ainda tem folga: 2 de 3).
+    expect((await send(200)).status()).toBe(429);
   });
 });

@@ -29,7 +29,9 @@ export default function DiagnosticoPage() {
             sobre o que faz sentido priorizar, ou pra dizer com honestidade que ainda não é o momento certo.
           </p>
         </Reveal>
-        <DiagnosticoForm />
+        {/* Site key PÚBLICO do Turnstile — lido no servidor e repassado ao form.
+            A validação real usa TURNSTILE_SECRET_KEY (server-only). */}
+        <DiagnosticoForm turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ""} />
       </Container>
     </section>
   );

@@ -69,7 +69,10 @@ export function getSupabaseServerClient(): SupabaseClient | null {
  *
  * -- Rate limit compartilhado do endpoint /api/diagnostico (ver src/lib/rate-limit.ts).
  * -- Janela fixa, atômica por linha (`for update`) — funciona com múltiplas
- * -- instâncias e sobrevive a restart do processo.
+ * -- instâncias e sobrevive a restart do processo. São DUAS janelas por
+ * -- origem (curta 3/15min + longa 10/24h): a mesma função/tabela, chamada
+ * -- com chaves distintas (`<chave>:15m`, `<chave>:24h`) e p_max/p_window
+ * -- próprios. Nenhuma mudança de SQL entre uma e duas janelas.
  *
  * create table if not exists diagnostico_rate_limit (
  *   key text primary key,

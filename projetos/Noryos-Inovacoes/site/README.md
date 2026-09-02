@@ -51,8 +51,8 @@ Cobertura (`e2e/`):
 | `home.spec.ts` | Home responde 200, Header/logo/CTA, âncoras, sem erro de JS nem 404 de asset |
 | `navigation.spec.ts` | Menu desktop navega, CTA com href válido, menu mobile 390px, sem scroll horizontal |
 | `sections.spec.ts` | Noryos OS troca a categoria; FAQ abre/fecha |
-| `diagnostico.spec.ts` | Form renderiza/valida/percorre as 5 etapas/LGPD; envio real com e-mail **mockado** → loading, sucesso, 1 registro, 1 e-mail; duplo clique não duplica; fluxo completo no mobile 390px sem scroll horizontal |
-| `diagnostico-api.spec.ts` | Contrato de `POST /api/diagnostico`: 405/415/413/400, honeypot, envio rápido, e-mail inválido, URL inválida, sem consentimento, submissão válida (1 registro + 1 e-mail mock), dedupe, **rate limit: bloqueio + expiração + recuperação**. Spam nunca dispara e-mail |
+| `diagnostico.spec.ts` | Form renderiza/valida/percorre as 5 etapas/LGPD; envio real com e-mail **mockado** e `turnstileToken` injetado no POST → loading, sucesso, 1 registro, 1 e-mail; duplo clique não duplica; fluxo completo no mobile 390px sem scroll horizontal |
+| `diagnostico-api.spec.ts` | Contrato de `POST /api/diagnostico`: 405/415/413/400, **Turnstile (token ausente/inválido → 403, válido → 200; checado antes do Zod)**, honeypot, envio rápido, e-mail inválido, URL inválida, sem consentimento, submissão válida (1 registro + 1 e-mail mock), dedupe, **rate limit 2 janelas: curta + longa, bloqueio + expiração + recuperação**. Spam nunca dispara e-mail |
 | `routes.spec.ts` | 9 rotas → 200 + `<title>`/`<h1>`; `sitemap.xml`/`robots.txt`; 404 real |
 | `metadata.spec.ts` | `<title>`/description/canonical/OG/Twitter no HTML final; ícones 200 + MIME; JSON-LD válido |
 | `motion.spec.ts` | Depois do scroll o conteúdo aparece; interações funcionam; console limpo |
@@ -134,19 +134,39 @@ Pipeline no servidor, nesta ordem: método (só POST, senão 405) →
 Content-Type `application/json` (senão 415) → limite de payload 16 KB
 (senão 413) → JSON válido (senão 400) → honeypot (`website`) → tempo
 mínimo de preenchimento (2,5 s desde a montagem do form) → **rate limit
-por IP** → validação Zod (`src/app/diagnostico/schema.ts`; inclui checagem
-leniente de URL em `site`/`googleBusiness`) → sanitização → deduplicação
-(mesma empresa+WhatsApp+e-mail em 2 min devolve o mesmo `id`, sem novo
-registro nem novo e-mail) → **persistência** (`src/lib/diagnostico-store.ts`)
-→ **só então** notificação por e-mail (`src/lib/email.ts`).
+por origem (2 janelas)** → **Cloudflare Turnstile** (obrigatório,
+server-side; senão 403) → validação Zod (`src/app/diagnostico/schema.ts`;
+inclui checagem leniente de URL em `site`/`googleBusiness`) → sanitização →
+deduplicação (mesma empresa+WhatsApp+e-mail em 2 min devolve o mesmo `id`,
+sem novo registro nem novo e-mail) → **persistência**
+(`src/lib/diagnostico-store.ts`) → **só então** notificação por e-mail
+(`src/lib/email.ts`). Turnstile é checado **antes** de qualquer
+persistência/e-mail: falha = 403, nada gravado, nada enviado.
 
-**Rate limit** (`src/lib/rate-limit.ts`), janela fixa, default 5 req / 10 min:
+**Rate limit** (`src/lib/rate-limit.ts`) — **duas janelas fixas por
+origem**, ambas checadas a cada envio; a primeira que estourar devolve 429:
+- **curta** — default **3 envios / 15 min** (`DIAGNOSTIC_RATELIMIT_SHORT_MAX`
+  / `DIAGNOSTIC_RATELIMIT_SHORT_WINDOW_MS`)
+- **longa** — default **10 envios / 24 h** (`DIAGNOSTIC_RATELIMIT_LONG_MAX`
+  / `DIAGNOSTIC_RATELIMIT_LONG_WINDOW_MS`)
 - **Supabase** (`diagnostico_check_rate_limit` RPC, atômico por linha) quando
   configurado — **compartilhado entre instâncias e sobrevive a restart**. Alvo
-  de produção.
+  de produção. Cada janela é uma linha própria (`<chave>:15m`, `<chave>:24h`).
 - **Fallback em memória do processo** quando o Supabase não está configurado
   ou a RPC falha; loga um WARN único de "rate limit degradado".
-- Overrides: `DIAGNOSTIC_RATELIMIT_MAX`, `DIAGNOSTIC_RATELIMIT_WINDOW_MS`.
+- Nomes legados `DIAGNOSTIC_RATELIMIT_MAX` / `_WINDOW_MS` ainda funcionam como
+  fallback só da janela curta.
+
+**Cloudflare Turnstile** (`src/lib/turnstile.ts`) — anti-bot do formulário:
+- Site key **público** em `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (só o frontend;
+  lido no Server Component `diagnostico/page.tsx` e repassado ao form).
+- Secret **server-only** em `TURNSTILE_SECRET_KEY` — **nunca `NEXT_PUBLIC_`**.
+  O endpoint valida o token contra a API `siteverify` da Cloudflare.
+- Sem token válido → **403**, sem persistir e sem e-mail.
+- Sem `TURNSTILE_SECRET_KEY` em **produção** → 403 (falha fechado). Em
+  dev/teste sem a secret → checagem **pulada** com WARN.
+- `TURNSTILE_MODE=mock` (só dev/teste, ex. suíte E2E): resultado vem do
+  próprio token, sem rede.
 
 Honeypot / envio rápido demais respondem `{ ok: true }` sem persistir e
 sem notificar. Se o e-mail falhar depois do lead salvo, a resposta
@@ -260,6 +280,12 @@ checklist final.
 - **`RESEND_API_KEY` + `DIAGNOSTIC_NOTIFICATION_EMAIL` reais** — sem eles o
   diagnóstico é salvo mas a notificação não sai. Fazer a checagem real
   controlada (acima) uma vez após configurar.
+- **`NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` reais** —
+  obrigatórios pro Diagnóstico em produção. Sem a secret, o endpoint responde
+  403 (falha fechado) e o formulário não envia. Criar o widget em
+  `dash.cloudflare.com` → Turnstile, adicionar o domínio, preencher as duas
+  vars na Hostinger. Validar em produção: abrir `/diagnostico`, completar as 5
+  etapas, confirmar que o widget aparece e o envio conclui.
 - Dedupe de submissão ainda é em memória do processo — se o processo
   reiniciar entre dois cliques, pode gerar 2 registros. Endurecer com um
   índice único no Supabase (hash empresa+whatsapp+email por janela).
