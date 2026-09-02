@@ -3,7 +3,7 @@
 > Memória central do negócio. O Claude lê esse arquivo antes de cada resposta.
 > Preenchido pelo `/instalar` — você pode editar a qualquer momento.
 
-**Nome:** Rafael Viriato *(assumido a partir do ambiente do projeto — confirmar)*
+**Nome:** Rafael Viriato
 **Negócio:** Noryos Inovações (noryosinovacoes.com.br)
 **O que faz:** Empresa de soluções digitais e tecnologia pra pequenas e médias empresas — presença digital (sites), automação, aquisição e performance (Ads), e conteúdo. Posicionamento explícito de NÃO parecer agência de marketing tradicional.
 **Perfil:** Iniciativa pessoal / founder-led — Rafael é responsável direto pelos projetos, sem equipe ainda.
