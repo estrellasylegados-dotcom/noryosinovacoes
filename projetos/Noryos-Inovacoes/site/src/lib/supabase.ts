@@ -63,9 +63,30 @@ export function getSupabaseServerClient(): SupabaseClient | null {
  *   observacoes text,
  *   status text not null default 'novo'
  *     check (status in ('novo','em_analise','concluido','reuniao','proposta','cliente','perdido')),
- *   score integer,
- *   resultado jsonb
+ *   -- Qualificação comercial automática (scoring V1, determinístico —
+ *   -- ver src/lib/diagnostico-scoring.ts). Gravados num único insert, junto
+ *   -- com o lead. Registros pré-v1 ficam com estas colunas NULL.
+ *   score integer,              -- POTENCIAL COMERCIAL (0–100) — score principal
+ *   maturidade_digital integer, -- MATURIDADE DIGITAL (0–100)
+ *   classificacao text,         -- baixa_prioridade | oportunidade_fria | boa_oportunidade | oportunidade_quente | prioridade_comercial
+ *   prioridade text,            -- baixa | media | alta | critica
+ *   scoring_version text,       -- 'v1'
+ *   resultado jsonb             -- objeto completo e auditável (scores, criterios, gaps, servicosRecomendados, proximaAcao, qualidadeContato)
  * );
+ *
+ * create index if not exists diagnosticos_classificacao_idx      on diagnosticos (classificacao);
+ * create index if not exists diagnosticos_prioridade_idx         on diagnosticos (prioridade);
+ * create index if not exists diagnosticos_maturidade_digital_idx on diagnosticos (maturidade_digital);
+ * create index if not exists diagnosticos_score_idx              on diagnosticos (score);
+ *
+ * -- Já existe um projeto Supabase? Migração ADITIVA, não-destrutiva (não
+ * -- altera linhas existentes — as colunas novas ficam NULL):
+ * --   alter table diagnosticos add column if not exists maturidade_digital integer;
+ * --   alter table diagnosticos add column if not exists classificacao      text;
+ * --   alter table diagnosticos add column if not exists prioridade         text;
+ * --   alter table diagnosticos add column if not exists scoring_version    text;
+ * --   (score e resultado já existiam; passam a ser preenchidos)
+ * --   + os quatro create index acima.
  *
  * -- Rate limit compartilhado do endpoint /api/diagnostico (ver src/lib/rate-limit.ts).
  * -- Janela fixa, atômica por linha (`for update`) — funciona com múltiplas

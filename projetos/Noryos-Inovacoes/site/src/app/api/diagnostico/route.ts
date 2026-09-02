@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { diagnosticoSchema, type DiagnosticoInput } from "@/app/diagnostico/schema";
+import { scoreDiagnostico } from "@/lib/diagnostico-scoring";
 import { persistDiagnostico } from "@/lib/diagnostico-store";
 import { sendDiagnosticoNotification, type EmailStatus } from "@/lib/email";
 import { enforceRateLimit, getDedup, setDedup } from "@/lib/rate-limit";
@@ -13,8 +14,13 @@ import { verifyTurnstileToken } from "@/lib/turnstile";
  *   método → Content-Type → tamanho do payload → JSON válido → honeypot →
  *   tempo mínimo de preenchimento → rate limit por origem (2 janelas:
  *   3/15min + 10/24h) → Cloudflare Turnstile (obrigatório, server-side) →
- *   validação (zod) → sanitização → dedupe → PERSISTÊNCIA → (só então)
- *   NOTIFICAÇÃO por e-mail → resposta de sucesso.
+ *   validação (zod) → sanitização → dedupe → SCORING (função pura, sem I/O) →
+ *   PERSISTÊNCIA → (só então) NOTIFICAÇÃO por e-mail → resposta de sucesso.
+ *
+ * O scoring (qualificação comercial V1, determinística) roda DEPOIS do
+ * short-circuit de dedupe: uma duplicata devolve o resultado em cache e NÃO é
+ * repontuada. Como é pura e barata, também nunca roda em request inválida.
+ * O lead + o scoring são gravados numa ÚNICA linha (nada de UPDATE posterior).
  *
  * Turnstile é verificado ANTES de qualquer persistência ou e-mail: sem um
  * token que a Cloudflare confirme, o endpoint responde 403 e nada é gravado
@@ -192,8 +198,13 @@ export async function POST(request: Request): Promise<Response> {
   const cached = getDedup<ApiOk>(dedupKey);
   if (cached) return json({ ...cached, duplicate: true });
 
-  // 10. PERSISTÊNCIA (antes do e-mail)
-  const persisted = await persistDiagnostico(data);
+  // 10. SCORING V1 — qualificação comercial determinística. Função PURA (sem
+  //     rede, sem I/O, sem estado): só roda aqui, depois de TUDO validado e do
+  //     short-circuit de dedupe acima. Ver src/lib/diagnostico-scoring.ts.
+  const scoring = scoreDiagnostico(data);
+
+  // 11. PERSISTÊNCIA (antes do e-mail) — lead + scoring numa única linha.
+  const persisted = await persistDiagnostico(data, scoring);
   if (!persisted.ok) {
     return json(
       { ok: false, error: "Não conseguimos registrar agora. Tente novamente em instantes." },
@@ -202,11 +213,12 @@ export async function POST(request: Request): Promise<Response> {
   }
   const { id } = persisted.record;
 
-  // 11. NOTIFICAÇÃO — só depois do lead salvo. Falha aqui NÃO perde o lead.
+  // 12. NOTIFICAÇÃO — só depois do lead salvo. Falha aqui NÃO perde o lead.
+  //     O e-mail carrega a análise do scoring (resumo comercial no topo).
   const receivedAt = new Date(persisted.record.createdAt);
   let email: EmailStatus;
   try {
-    email = await sendDiagnosticoNotification({ diagnostico: data, id, receivedAt });
+    email = await sendDiagnosticoNotification({ diagnostico: data, id, receivedAt, scoring });
   } catch {
     email = { status: "error", reason: "unexpected" };
   }
@@ -222,7 +234,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // 12. Sucesso — guarda no dedupe e responde.
+  // 13. Sucesso — guarda no dedupe e responde.
   const result: ApiOk = { ok: true, id, email: email.status };
   setDedup(dedupKey, result);
   return json(result);

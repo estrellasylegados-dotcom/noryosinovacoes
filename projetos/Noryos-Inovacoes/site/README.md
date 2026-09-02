@@ -112,7 +112,12 @@ Enquanto a variável estiver vazia, os CTAs caem em fallback de e-mail.
 1. Criar um projeto em [supabase.com](https://supabase.com)
 2. Rodar **todo** o SQL de referência (comentário no topo de
    `src/lib/supabase.ts`): tabela `diagnosticos` **+** tabela/função
-   `diagnostico_check_rate_limit` (rate limit compartilhado).
+   `diagnostico_check_rate_limit` (rate limit compartilhado). A tabela
+   `diagnosticos` já inclui as colunas da **qualificação comercial
+   automática** (scoring V1 — ver abaixo). Projeto Supabase já existente:
+   rodar o bloco `alter table … add column if not exists` do mesmo
+   comentário (aditivo, não-destrutivo — linhas antigas ficam com essas
+   colunas `NULL`).
 3. Preencher no `.env.local`:
    ```
    SUPABASE_URL=...
@@ -138,10 +143,47 @@ por origem (2 janelas)** → **Cloudflare Turnstile** (obrigatório,
 server-side; senão 403) → validação Zod (`src/app/diagnostico/schema.ts`;
 inclui checagem leniente de URL em `site`/`googleBusiness`) → sanitização →
 deduplicação (mesma empresa+WhatsApp+e-mail em 2 min devolve o mesmo `id`,
-sem novo registro nem novo e-mail) → **persistência**
-(`src/lib/diagnostico-store.ts`) → **só então** notificação por e-mail
-(`src/lib/email.ts`). Turnstile é checado **antes** de qualquer
-persistência/e-mail: falha = 403, nada gravado, nada enviado.
+sem novo registro nem novo e-mail) → **scoring V1** (função pura, sem I/O —
+`src/lib/diagnostico-scoring.ts`) → **persistência** (lead + scoring numa
+única linha — `src/lib/diagnostico-store.ts`) → **só então** notificação
+por e-mail com o resumo comercial (`src/lib/email.ts`). Turnstile é checado
+**antes** de qualquer persistência/e-mail: falha = 403, nada gravado, nada
+enviado. O scoring roda **depois** do short-circuit de dedupe — uma
+duplicata devolve o resultado em cache e **não** é repontuada.
+
+## Qualificação comercial automática (scoring V1)
+
+`src/lib/diagnostico-scoring.ts` — **determinístico, auditável, sem IA**.
+`scoreDiagnostico(data)` recebe os dados já validados e devolve dois scores
+0–100 e a leitura comercial. Recalibrar = mudar os pesos no topo do arquivo
+e **bumpar `SCORING_VERSION`** (hoje `"v1"`); registros antigos guardam a
+versão com que foram pontuados, então a interpretação não se perde.
+
+- **`maturidadeDigital`** (0–100, alto = mais estruturado): site 35 · Google
+  Business 20 · Instagram/redes 15 · estrutura de aquisição 20 · atendimento 10.
+- **`potencialComercial`** (0–100, alto = melhor oportunidade): gaps que a
+  Noryos resolve 35 · dor/problema claro 20 · objetivo de crescimento 25 ·
+  urgência 10 · aderência aos serviços Noryos 10. **Completude de contato
+  NÃO entra no score** — vai em `qualidadeContato` (informativo).
+- **`classificacao`**: `baixa_prioridade` (0–29) · `oportunidade_fria`
+  (30–49) · `boa_oportunidade` (50–69) · `oportunidade_quente` (70–84) ·
+  `prioridade_comercial` (85–100).
+- **`prioridade`**: `baixa` · `media` · `alta` · `critica` (`critica` só em
+  85+ com urgência ou muitos gaps).
+- **`gaps`**, **`servicosRecomendados`** (só entre Presença Digital /
+  Automações / Aquisição e Performance / Conteúdo / Redes Sociais; no máx.
+  3; nunca todos por padrão), **`proximaAcao`**, **`criterios`** (auditoria
+  sem PII do lead).
+
+**Persistência** (colunas de `diagnosticos`): `score` = potencial comercial ·
+`maturidade_digital` · `classificacao` · `prioridade` · `scoring_version` ·
+`resultado` (jsonb com o objeto completo). O **frontend não expõe** o score
+— o resultado é interno da Noryos.
+
+**E-mail interno** abre com o resumo comercial (potencial, maturidade,
+classificação, prioridade, gaps, serviços, próxima ação) e depois os dados
+crus do lead. O **subject** só ganha realce (`🔥 NN/100 — …`) em
+`prioridade_comercial` (85+); abaixo disso é neutro.
 
 **Rate limit** (`src/lib/rate-limit.ts`) — **duas janelas fixas por
 origem**, ambas checadas a cada envio; a primeira que estourar devolve 429:

@@ -3,6 +3,7 @@ import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { getSupabaseServerClient, DIAGNOSTICOS_TABLE } from "@/lib/supabase";
 import type { DiagnosticoInput } from "@/app/diagnostico/schema";
+import type { DiagnosticoScoring } from "@/lib/diagnostico-scoring";
 
 /**
  * Persistência do Diagnóstico Digital.
@@ -39,7 +40,19 @@ export type PersistResult =
 
 const LOCAL_FILE = path.join(process.cwd(), ".data", "diagnostico.local.jsonl");
 
-function toRow(data: DiagnosticoInput) {
+/**
+ * Monta a linha da tabela `diagnosticos`.
+ *
+ * Quando `scoring` é passado (fluxo normal — o endpoint pontua entre o dedupe
+ * e a persistência), grava também as colunas de qualificação:
+ *   - `score`              → potencial comercial (0–100), score principal
+ *   - `maturidade_digital` → maturidade digital (0–100)
+ *   - `classificacao`, `prioridade`, `scoring_version` → filtro/relatório
+ *   - `resultado` (jsonb)  → objeto completo e auditável do scoring
+ * Sem `scoring` (ex.: chamada legada / teste), a linha vai sem qualificação —
+ * as colunas ficam NULL, como nos registros pré-v1.
+ */
+function toRow(data: DiagnosticoInput, scoring?: DiagnosticoScoring) {
   return {
     nome_empresa: data.nomeEmpresa,
     responsavel: data.responsavel,
@@ -54,16 +67,29 @@ function toRow(data: DiagnosticoInput) {
     dificuldade: data.dificuldade || null,
     observacoes: data.observacoes || null,
     status: "novo" as const,
+    ...(scoring
+      ? {
+          score: scoring.potencialComercial,
+          maturidade_digital: scoring.maturidadeDigital,
+          classificacao: scoring.classificacao,
+          prioridade: scoring.prioridade,
+          scoring_version: scoring.scoringVersion,
+          resultado: scoring,
+        }
+      : {}),
   };
 }
 
-export async function persistDiagnostico(data: DiagnosticoInput): Promise<PersistResult> {
+export async function persistDiagnostico(
+  data: DiagnosticoInput,
+  scoring?: DiagnosticoScoring
+): Promise<PersistResult> {
   const supabase = getSupabaseServerClient();
 
   if (supabase) {
     const { data: inserted, error } = await supabase
       .from(DIAGNOSTICOS_TABLE)
-      .insert(toRow(data))
+      .insert(toRow(data, scoring))
       .select("id, created_at")
       .single();
 
@@ -119,7 +145,7 @@ export async function persistDiagnostico(data: DiagnosticoInput): Promise<Persis
   const record: StoredDiagnostico = { id: randomUUID(), createdAt: new Date().toISOString() };
   try {
     await mkdir(path.dirname(LOCAL_FILE), { recursive: true });
-    await appendFile(LOCAL_FILE, JSON.stringify({ ...record, ...toRow(data) }) + "\n", "utf8");
+    await appendFile(LOCAL_FILE, JSON.stringify({ ...record, ...toRow(data, scoring) }) + "\n", "utf8");
     return { ok: true, record, driver: "file" };
   } catch (err) {
     console.error("[diagnostico] fallback local falhou:", err instanceof Error ? err.name : "erro");

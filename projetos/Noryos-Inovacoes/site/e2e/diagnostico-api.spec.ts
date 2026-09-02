@@ -270,3 +270,102 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
     expect((await send(200)).status()).toBe(429);
   });
 });
+
+/**
+ * Scoring V1 (qualificação comercial) no pipeline — ver src/lib/diagnostico-scoring.ts.
+ * O scoring roda ENTRE o dedupe e a persistência: só em request 100% válida,
+ * numa única linha, e o e-mail (depois da persistência) carrega a análise.
+ */
+test.describe("POST /api/diagnostico — scoring V1 persistido e notificado", () => {
+  test("submissão válida grava score, maturidade_digital, classificacao, prioridade, scoring_version e resultado", async ({
+    request,
+  }) => {
+    const { empresa, body } = basePayload();
+    const res = await post(request, body, "10.7.0.1");
+    expect(res.status()).toBe(200);
+
+    const [rec] = recordsFor(empresa);
+    expect(rec).toBeTruthy();
+
+    expect(typeof rec.score).toBe("number");
+    expect(rec.score as number).toBeGreaterThanOrEqual(0);
+    expect(rec.score as number).toBeLessThanOrEqual(100);
+    expect(typeof rec.maturidade_digital).toBe("number");
+    expect(rec.maturidade_digital as number).toBeGreaterThanOrEqual(0);
+    expect(rec.maturidade_digital as number).toBeLessThanOrEqual(100);
+    expect(rec.scoring_version).toBe("v1");
+    expect(String(rec.classificacao ?? "")).not.toBe("");
+    expect(["baixa", "media", "alta", "critica"]).toContain(String(rec.prioridade ?? ""));
+
+    const resultado = rec.resultado as Record<string, unknown>;
+    expect(resultado).toBeTruthy();
+    expect(resultado.scoringVersion).toBe("v1");
+    expect(resultado.potencialComercial).toBe(rec.score);
+    expect(resultado.maturidadeDigital).toBe(rec.maturidade_digital);
+    expect(Array.isArray(resultado.gaps)).toBe(true);
+    expect(Array.isArray(resultado.servicosRecomendados)).toBe(true);
+    expect((resultado.servicosRecomendados as unknown[]).length).toBeLessThanOrEqual(3);
+    expect(Array.isArray(resultado.criterios)).toBe(true);
+    expect(typeof resultado.proximaAcao).toBe("string");
+  });
+
+  test("e-mail interno traz o resumo comercial no topo (potencial, classificação, próxima ação)", async ({
+    request,
+  }) => {
+    const { empresa, body } = basePayload();
+    const res = await post(request, body, "10.7.0.2");
+    expect(res.status()).toBe(200);
+
+    const [mail] = emailsFor(empresa);
+    expect(mail).toBeTruthy();
+    const preview = String(mail.textPreview ?? "");
+    expect(preview).toContain("NOVO DIAGNÓSTICO DIGITAL");
+    expect(preview).toMatch(/Potencial comercial: \d{1,3}\/100/);
+    expect(preview).toMatch(/Maturidade digital: \d{1,3}\/100/);
+    expect(preview).toContain("Classificação:");
+    expect(preview).toContain("Próxima ação:");
+    expect(preview).toContain("Scoring: v1");
+    // dados crus do lead continuam presentes, depois da análise
+    expect(preview).toContain("DADOS ENVIADOS PELO LEAD");
+  });
+
+  test("subject só ganha emoji/realce em prioridade_comercial — lead comum fica neutro", async ({ request }) => {
+    const { empresa, body } = basePayload();
+    const res = await post(request, body, "10.7.0.3");
+    expect(res.status()).toBe(200);
+
+    const [mail] = emailsFor(empresa);
+    expect(String(mail.subject)).toBe(`Novo Diagnóstico Digital Noryos — ${empresa}`);
+    expect(String(mail.subject)).not.toContain("🔥");
+  });
+
+  test("duplicata NÃO repontua: 1 registro, scoring_version v1, mesmo id", async ({ request }) => {
+    const { body } = basePayload({ nomeEmpresa: undefined });
+    const nome = `TESTE NORYOS QA SCORE DUP ${Date.now()}`;
+    const payload = { ...body, nomeEmpresa: nome };
+
+    const first = await post(request, payload, "10.7.0.4");
+    const second = await post(request, payload, "10.7.0.4");
+    const b1 = await first.json();
+    const b2 = await second.json();
+
+    expect(b1.ok && b2.ok).toBe(true);
+    expect(b2.duplicate).toBe(true);
+    expect(b2.id).toBe(b1.id);
+
+    const regs = recordsFor(nome);
+    expect(regs).toHaveLength(1);
+    expect(regs[0].scoring_version).toBe("v1");
+    expect(emailsFor(nome)).toHaveLength(1);
+  });
+
+  test("Turnstile inválido → 403 e o scoring nem chega a rodar (nada persistido, nada notificado)", async ({
+    request,
+  }) => {
+    const { empresa, body } = basePayload({ turnstileToken: "token-invalido" });
+    const res = await post(request, body, "10.7.0.5");
+    expect(res.status()).toBe(403);
+    expect(recordsFor(empresa)).toHaveLength(0);
+    expect(emailsFor(empresa)).toHaveLength(0);
+  });
+});
