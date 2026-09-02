@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { FloatingWhatsapp } from "@/components/FloatingWhatsapp";
+import { Analytics } from "@/components/Analytics";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 import { siteConfig } from "@/lib/config";
 import { organizationJsonLd, websiteJsonLd, jsonLdScript } from "@/lib/seo";
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR" className={`${inter.variable} ${manrope.variable} ${geistMono.variable}`}>
       <body className="flex min-h-screen flex-col antialiased">
+        <Analytics />
         {/* Sem JS, o motion system não adiciona `.is-in` — garante conteúdo visível. */}
         <noscript>
           <style>{`[data-anim],.reveal{opacity:1!important;transform:none!important;clip-path:none!important}`}</style>

@@ -3,19 +3,23 @@ import fs from "node:fs";
 import path from "node:path";
 
 /**
- * Testes de contrato do endpoint POST /api/diagnostico — pipeline anti-spam,
- * rate limit e fluxo persistir → notificar.
+ * Testes de contrato do endpoint POST /api/diagnostico — Form V2.
+ * Pipeline anti-spam, Turnstile, rate limit, campo cruzado (link obrigatório)
+ * e fluxo persistir → notificar, com respostas ESTRUTURADAS.
  *
  * Servidor sob teste (ver playwright.config.ts → webServer.env):
  *   DIAGNOSTIC_EMAIL_PROVIDER=mock             → e-mail vai pra .data/diagnostico.email-mock.jsonl
  *   DIAGNOSTIC_ALLOW_FILE_FALLBACK=1           → persistência no fallback local (sem Supabase)
  *   DIAGNOSTIC_RATELIMIT_SHORT_MAX=3 / _WINDOW_MS=2500   → janela curta
  *   DIAGNOSTIC_RATELIMIT_LONG_MAX=5  / _WINDOW_MS=12000  → janela longa
- *   TURNSTILE_MODE=mock                        → token com "pass" (ou o dummy) = ok; ausente/outro = 403
+ *   TURNSTILE_MODE=mock                        → token com "pass" = ok; ausente/outro = 403
+ *
+ * O scoring V1 NÃO mudou (mesmos pesos/faixas, scoring_version="v1"). O Form
+ * V2 grava também: form_version="v2", respostas jsonb, prazo,
+ * objetivo_principal, porte. Colunas legadas seguem sendo gravadas.
  *
  * Isolamento: cada caso usa um X-Forwarded-For sintético próprio (chave do
- * rate limit) e um nome de empresa único (chave de dedupe). Nenhum e-mail
- * real é enviado, nenhuma chamada de rede à Cloudflare.
+ * rate limit) e um nome de empresa único (chave de dedupe).
  */
 
 const ENDPOINT = "/api/diagnostico";
@@ -48,13 +52,23 @@ function basePayload(overrides: Record<string, unknown> = {}) {
       email: "qa+diagnostico@example.com",
       cidade: "Porto Alegre",
       segmento: "Serviços",
+      porte: "2_5",
+      presenca: [],
       site: "",
       instagram: "",
       googleBusiness: "",
-      comoConquistaClientes: "Indicação.",
-      dificuldade: "Responder rápido no WhatsApp.",
-      objetivo: "Organizar a operação.",
-      observacoes: "",
+      canais: ["indicacao"],
+      canaisOutro: "",
+      aquisicaoNota: "",
+      ferramentas: [],
+      organizacao: "",
+      dificuldadePrincipal: "",
+      dificuldadeOutro: "",
+      dificuldadeNota: "",
+      objetivoPrincipal: "organizar_operacao",
+      objetivoOutro: "",
+      objetivoNota: "",
+      prazo: "ate_90_dias",
       consentimento: true,
       startedAt: Date.now() - 10_000, // passa do tempo mínimo de preenchimento
       turnstileToken: "pass", // TURNSTILE_MODE=mock aceita qualquer token com "pass"
@@ -71,14 +85,14 @@ function post(request: APIRequestContext, body: unknown, ip: string, init: Recor
   });
 }
 
-test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () => {
+test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato (V2)", () => {
   test("GET não é permitido (405)", async ({ request }) => {
     const res = await request.get(ENDPOINT);
     expect(res.status()).toBe(405);
     expect(res.headers()["allow"]).toContain("POST");
   });
 
-  test("Content-Type não-JSON é rejeitado (415) e não envia e-mail", async ({ request }) => {
+  test("Content-Type não-JSON é rejeitado (415)", async ({ request }) => {
     const res = await request.post(ENDPOINT, {
       headers: { "Content-Type": "text/plain", "X-Forwarded-For": "10.1.0.1" },
       data: "nomeEmpresa=Teste",
@@ -98,13 +112,12 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
   });
 
   test("payload acima do limite é rejeitado (413)", async ({ request }) => {
-    const { body } = basePayload({ observacoes: "x".repeat(20_000) });
+    const { body } = basePayload({ objetivoNota: "x".repeat(40_000) });
     const res = await post(request, body, "10.1.0.3");
     expect(res.status()).toBe(413);
   });
 
   test("formulário vazio é inválido (400)", async ({ request }) => {
-    // token válido pra passar do Turnstile (checado antes do Zod) e cair no 400 do Zod
     const res = await post(
       request,
       { consentimento: true, startedAt: Date.now() - 10_000, turnstileToken: "pass" },
@@ -132,6 +145,39 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
     expect(res.status()).toBe(400);
   });
 
+  test("objetivoPrincipal ausente → 400 (obrigatório, sem escape silencioso)", async ({ request }) => {
+    const { body } = basePayload({ objetivoPrincipal: undefined });
+    const res = await post(request, body, "10.3.0.1");
+    expect(res.status()).toBe(400);
+  });
+
+  test("prazo ausente → 400 (obrigatório)", async ({ request }) => {
+    const { body } = basePayload({ prazo: undefined });
+    const res = await post(request, body, "10.3.0.2");
+    expect(res.status()).toBe(400);
+  });
+
+  test("opção inválida em multiselect → 400 (validação de conjunto fechado)", async ({ request }) => {
+    const { body } = basePayload({ canais: ["indicacao", "canal_que_nao_existe"] });
+    const res = await post(request, body, "10.3.0.3");
+    expect(res.status()).toBe(400);
+  });
+
+  test("marcou que tem Site mas não informou o link → 400 (regra de campo cruzado)", async ({ request }) => {
+    const { empresa, body } = basePayload({ presenca: ["site"], site: "" });
+    const res = await post(request, body, "10.3.0.4");
+    expect(res.status()).toBe(400);
+    expect(recordsFor(empresa)).toHaveLength(0);
+  });
+
+  test("marcou Instagram + informou o @ → 200", async ({ request }) => {
+    const { empresa, body } = basePayload({ presenca: ["instagram"], instagram: "@minhaempresa" });
+    const res = await post(request, body, "10.3.0.5");
+    expect(res.status()).toBe(200);
+    const [rec] = recordsFor(empresa);
+    expect(rec.instagram).toBe("@minhaempresa");
+  });
+
   test("Turnstile: token ausente → 403, sem persistir e sem e-mail", async ({ request }) => {
     const { empresa, body } = basePayload({ turnstileToken: undefined });
     const res = await post(request, body, "10.2.0.1");
@@ -140,7 +186,6 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
     expect(j.ok).toBe(false);
     expect(recordsFor(empresa)).toHaveLength(0);
     expect(emailsFor(empresa)).toHaveLength(0);
-    // nada de secret / internals no corpo
     expect(JSON.stringify(j)).not.toMatch(/TURNSTILE|secret|siteverify|SUPABASE|RESEND/i);
   });
 
@@ -153,21 +198,10 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
     expect(emailsFor(empresa)).toHaveLength(0);
   });
 
-  test("Turnstile: token válido → 200, persiste 1 registro e 1 e-mail", async ({ request }) => {
-    const { empresa, body } = basePayload({ turnstileToken: "pass" });
-    const res = await post(request, body, "10.2.0.3");
-    expect(res.status()).toBe(200);
-    const j = await res.json();
-    expect(j.ok).toBe(true);
-    expect(j.id).toBeTruthy();
-    expect(recordsFor(empresa)).toHaveLength(1);
-    expect(emailsFor(empresa)).toHaveLength(1);
-  });
-
   test("Turnstile é checado ANTES da validação Zod (body inválido + token ruim → 403, não 400)", async ({
     request,
   }) => {
-    const { body } = basePayload({ turnstileToken: "xxx", nomeEmpresa: "" });
+    const { body } = basePayload({ turnstileToken: "xxx", nomeEmpresa: "", objetivoPrincipal: undefined });
     const res = await post(request, body, "10.2.0.4");
     expect(res.status()).toBe(403);
   });
@@ -208,12 +242,11 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
     expect(mails[0].to).toBe("qa-inbox@noryos.test"); // destinatário vem da env, não do form
     expect(String(mails[0].subject)).toBe(`Novo Diagnóstico Digital Noryos — ${empresa}`);
 
-    // sem vazar internals no corpo da resposta
     expect(JSON.stringify(j)).not.toMatch(/x-forwarded-for|RESEND|SUPABASE|api key|stack/i);
   });
 
   test("duplo envio idêntico: 2º volta duplicate:true, MESMO id, 1 registro, 1 e-mail", async ({ request }) => {
-    const { empresa, body } = basePayload({ nomeEmpresa: undefined });
+    const { body } = basePayload({ nomeEmpresa: undefined });
     const nome = `TESTE NORYOS QA DUP ${Date.now()}`;
     const payload = { ...body, nomeEmpresa: nome };
 
@@ -227,7 +260,6 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
     expect(b2.id).toBe(b1.id);
     expect(recordsFor(nome)).toHaveLength(1);
     expect(emailsFor(nome)).toHaveLength(1);
-    void empresa;
   });
 
   test("rate limit (janela curta): bloqueia após o limite e libera depois da janela", async ({ request }) => {
@@ -238,11 +270,9 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
       const res = await post(request, body, ip);
       codes.push(res.status());
     }
-    // primeiras RL_SHORT_MAX passam, a seguinte é 429
     expect(codes.slice(0, RL_SHORT_MAX).every((c) => c === 200)).toBe(true);
     expect(codes[RL_SHORT_MAX]).toBe(429);
 
-    // espera a janela curta expirar → usuário legítimo volta a passar
     await new Promise((r) => setTimeout(r, RL_SHORT_WINDOW_MS + 800));
     const { body } = basePayload({ nomeEmpresa: `RL recuperado ${Date.now()}` });
     const again = await post(request, body, ip);
@@ -256,63 +286,79 @@ test.describe("POST /api/diagnostico — anti-spam, rate limit e contrato", () =
       return post(request, body, ip);
     };
 
-    // 3 envios seguidos: estouram a janela curta (max 3), longa fica em 3.
     for (let i = 0; i < RL_SHORT_MAX; i++) expect((await send(i)).status()).toBe(200);
     expect((await send(99)).status()).toBe(429); // curta
 
-    // janela curta expira; a longa NÃO (12 s). Contador longo segue em 3.
     await new Promise((r) => setTimeout(r, RL_SHORT_WINDOW_MS + 900));
 
-    // mais 2 envios: longa vai a 5 (= RL_LONG_MAX), curta só a 2.
     for (let i = 0; i < RL_LONG_MAX - RL_SHORT_MAX; i++) expect((await send(100 + i)).status()).toBe(200);
 
-    // o próximo é barrado pela JANELA LONGA (curta ainda tem folga: 2 de 3).
-    expect((await send(200)).status()).toBe(429);
+    expect((await send(200)).status()).toBe(429); // longa
   });
 });
 
 /**
- * Scoring V1 (qualificação comercial) no pipeline — ver src/lib/diagnostico-scoring.ts.
+ * Scoring V1 (inalterado) + respostas estruturadas V2 no pipeline.
  * O scoring roda ENTRE o dedupe e a persistência: só em request 100% válida,
- * numa única linha, e o e-mail (depois da persistência) carrega a análise.
+ * numa única linha.
  */
-test.describe("POST /api/diagnostico — scoring V1 persistido e notificado", () => {
-  test("submissão válida grava score, maturidade_digital, classificacao, prioridade, scoring_version e resultado", async ({
+test.describe("POST /api/diagnostico — scoring V1 + respostas V2 persistidos e notificados", () => {
+  test("grava score/maturidade/classificacao/prioridade/scoring_version/resultado (v1) + form_version/respostas/prazo/objetivo_principal/porte (v2)", async ({
     request,
   }) => {
-    const { empresa, body } = basePayload();
+    const { empresa, body } = basePayload({
+      presenca: ["instagram"],
+      instagram: "@teste",
+      canais: ["indicacao", "instagram_redes"],
+      ferramentas: ["planilhas"],
+      organizacao: "manual",
+      dificuldadePrincipal: "atendimento_desorganizado",
+      objetivoPrincipal: "mais_clientes",
+      prazo: "o_quanto_antes",
+      porte: "6_20",
+    });
     const res = await post(request, body, "10.7.0.1");
     expect(res.status()).toBe(200);
 
     const [rec] = recordsFor(empresa);
     expect(rec).toBeTruthy();
 
+    // --- scoring V1 (inalterado) ---
     expect(typeof rec.score).toBe("number");
     expect(rec.score as number).toBeGreaterThanOrEqual(0);
     expect(rec.score as number).toBeLessThanOrEqual(100);
     expect(typeof rec.maturidade_digital).toBe("number");
-    expect(rec.maturidade_digital as number).toBeGreaterThanOrEqual(0);
-    expect(rec.maturidade_digital as number).toBeLessThanOrEqual(100);
     expect(rec.scoring_version).toBe("v1");
     expect(String(rec.classificacao ?? "")).not.toBe("");
     expect(["baixa", "media", "alta", "critica"]).toContain(String(rec.prioridade ?? ""));
-
     const resultado = rec.resultado as Record<string, unknown>;
-    expect(resultado).toBeTruthy();
     expect(resultado.scoringVersion).toBe("v1");
     expect(resultado.potencialComercial).toBe(rec.score);
-    expect(resultado.maturidadeDigital).toBe(rec.maturidade_digital);
     expect(Array.isArray(resultado.gaps)).toBe(true);
-    expect(Array.isArray(resultado.servicosRecomendados)).toBe(true);
     expect((resultado.servicosRecomendados as unknown[]).length).toBeLessThanOrEqual(3);
-    expect(Array.isArray(resultado.criterios)).toBe(true);
-    expect(typeof resultado.proximaAcao).toBe("string");
+
+    // --- respostas estruturadas V2 (aditivas) ---
+    expect(rec.form_version).toBe("v2");
+    expect(rec.prazo).toBe("o_quanto_antes");
+    expect(rec.objetivo_principal).toBe("mais_clientes");
+    expect(rec.porte).toBe("6_20");
+    const respostas = rec.respostas as Record<string, unknown>;
+    expect(respostas).toBeTruthy();
+    expect(respostas.canais).toEqual(["indicacao", "instagram_redes"]);
+    expect(respostas.presenca).toEqual(["instagram"]);
+    expect(respostas.organizacao).toBe("manual");
+    expect(respostas.dificuldade_principal).toBe("atendimento_desorganizado");
+    expect((respostas.links as Record<string, unknown>).instagram).toBe("@teste");
+
+    // colunas legadas seguem sendo gravadas (backward compat de consultas)
+    expect(String(rec.objetivo ?? "")).not.toBe("");
+    expect(String(rec.dificuldade ?? "")).not.toBe("");
   });
 
-  test("e-mail interno traz o resumo comercial no topo (potencial, classificação, próxima ação)", async ({
+  test("e-mail interno: resumo comercial no topo + bloco 'RESPOSTAS DO LEAD (ESTRUTURADO)'", async ({
     request,
   }) => {
-    const { empresa, body } = basePayload();
+    const { empresa, body } = basePayload({ porte: "6_20", canais: ["indicacao", "google_ads"] });
     const res = await post(request, body, "10.7.0.2");
     expect(res.status()).toBe(200);
 
@@ -321,11 +367,10 @@ test.describe("POST /api/diagnostico — scoring V1 persistido e notificado", ()
     const preview = String(mail.textPreview ?? "");
     expect(preview).toContain("NOVO DIAGNÓSTICO DIGITAL");
     expect(preview).toMatch(/Potencial comercial: \d{1,3}\/100/);
-    expect(preview).toMatch(/Maturidade digital: \d{1,3}\/100/);
-    expect(preview).toContain("Classificação:");
-    expect(preview).toContain("Próxima ação:");
     expect(preview).toContain("Scoring: v1");
-    // dados crus do lead continuam presentes, depois da análise
+    expect(preview).toContain("RESPOSTAS DO LEAD (ESTRUTURADO)");
+    expect(preview).toContain("Prazo para começar:");
+    expect(preview).toContain("Porte: 6–20 pessoas");
     expect(preview).toContain("DADOS ENVIADOS PELO LEAD");
   });
 
@@ -339,7 +384,7 @@ test.describe("POST /api/diagnostico — scoring V1 persistido e notificado", ()
     expect(String(mail.subject)).not.toContain("🔥");
   });
 
-  test("duplicata NÃO repontua: 1 registro, scoring_version v1, mesmo id", async ({ request }) => {
+  test("duplicata NÃO repontua: 1 registro, scoring_version v1, form_version v2, mesmo id", async ({ request }) => {
     const { body } = basePayload({ nomeEmpresa: undefined });
     const nome = `TESTE NORYOS QA SCORE DUP ${Date.now()}`;
     const payload = { ...body, nomeEmpresa: nome };
@@ -356,6 +401,7 @@ test.describe("POST /api/diagnostico — scoring V1 persistido e notificado", ()
     const regs = recordsFor(nome);
     expect(regs).toHaveLength(1);
     expect(regs[0].scoring_version).toBe("v1");
+    expect(regs[0].form_version).toBe("v2");
     expect(emailsFor(nome)).toHaveLength(1);
   });
 

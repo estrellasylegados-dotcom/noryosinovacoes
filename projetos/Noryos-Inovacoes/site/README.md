@@ -51,8 +51,10 @@ Cobertura (`e2e/`):
 | `home.spec.ts` | Home responde 200, Header/logo/CTA, âncoras, sem erro de JS nem 404 de asset |
 | `navigation.spec.ts` | Menu desktop navega, CTA com href válido, menu mobile 390px, sem scroll horizontal |
 | `sections.spec.ts` | Noryos OS troca a categoria; FAQ abre/fecha |
-| `diagnostico.spec.ts` | Form renderiza/valida/percorre as 5 etapas/LGPD; envio real com e-mail **mockado** e `turnstileToken` injetado no POST → loading, sucesso, 1 registro, 1 e-mail; duplo clique não duplica; fluxo completo no mobile 390px sem scroll horizontal |
-| `diagnostico-api.spec.ts` | Contrato de `POST /api/diagnostico`: 405/415/413/400, **Turnstile (token ausente/inválido → 403, válido → 200; checado antes do Zod)**, honeypot, envio rápido, e-mail inválido, URL inválida, sem consentimento, submissão válida (1 registro + 1 e-mail mock), dedupe, **rate limit 2 janelas: curta + longa, bloqueio + expiração + recuperação**. Spam nunca dispara e-mail |
+| `diagnostico.spec.ts` | Form V2: 5 etapas com chips/cards, links condicionais (marcou → link obrigatório), objetivo/prazo obrigatórios, "Outro" revela input, Voltar preserva texto+chips+cards; envio real com e-mail **mockado** e `turnstileToken` injetado no POST → loading, sucesso, 1 registro (`form_version=v2`, `respostas` jsonb), 1 e-mail; duplo clique não duplica; fluxo completo no mobile 390px sem scroll horizontal |
+| `diagnostico-api.spec.ts` | Contrato de `POST /api/diagnostico` (V2): 405/415/413/400, **Turnstile (token ausente/inválido → 403, válido → 200; checado antes do Zod)**, honeypot, envio rápido, e-mail/URL inválidos, sem consentimento, **objetivo/prazo ausentes → 400**, **opção de multiselect inválida → 400**, **link obrigatório faltando → 400**, dedupe, **rate limit 2 janelas**. Persiste scoring V1 (inalterado) + `form_version`/`respostas`/`prazo`/`objetivo_principal`/`porte`; e-mail com resumo comercial + bloco estruturado |
+| `diagnostico-compose.spec.ts` | `composeLegacyText` (Form V2 → scoring V1): cada chip/opção → tier esperado do léxico V1 (aquisição paga/orgânica/redes/indicação; atendimento manual/severo; ausência de automação); decisão **U1** (prazo → urgência / exploratório); `organizado` não zera o critério de dor; texto composto < 2000 |
+| `diagnostico-analytics.spec.ts` | Funil do Diagnóstico emite iniciar/visualizar/avançar/voltar/erro/enviar/sucesso no `window.dataLayer`; **nenhum evento carrega PII** (nome/e-mail/telefone/empresa/texto livre); só chaves `event` + numéricos/flags |
 | `routes.spec.ts` | 9 rotas → 200 + `<title>`/`<h1>`; `sitemap.xml`/`robots.txt`; 404 real |
 | `metadata.spec.ts` | `<title>`/description/canonical/OG/Twitter no HTML final; ícones 200 + MIME; JSON-LD válido |
 | `motion.spec.ts` | Depois do scroll o conteúdo aparece; interações funcionam; console limpo |
@@ -114,10 +116,13 @@ Enquanto a variável estiver vazia, os CTAs caem em fallback de e-mail.
    `src/lib/supabase.ts`): tabela `diagnosticos` **+** tabela/função
    `diagnostico_check_rate_limit` (rate limit compartilhado). A tabela
    `diagnosticos` já inclui as colunas da **qualificação comercial
-   automática** (scoring V1 — ver abaixo). Projeto Supabase já existente:
-   rodar o bloco `alter table … add column if not exists` do mesmo
-   comentário (aditivo, não-destrutivo — linhas antigas ficam com essas
-   colunas `NULL`).
+   automática** (scoring V1) e do **Form V2** (`form_version`, `respostas`
+   jsonb, `prazo`, `objetivo_principal`, `porte` — ver abaixo). Projeto
+   Supabase já existente: rodar o bloco `alter table … add column if not
+   exists` do mesmo comentário **e** a migração
+   `supabase/migrations/2026-09-03_diagnostico_form_v2.sql` (ambos
+   aditivos, não-destrutivos — linhas antigas ficam com essas colunas
+   `NULL`).
 3. Preencher no `.env.local`:
    ```
    SUPABASE_URL=...
@@ -131,25 +136,46 @@ Enquanto a variável estiver vazia, os CTAs caem em fallback de e-mail.
    (`.data/diagnostico.local.jsonl`, git-ignorado), com WARN a cada
    gravação identificando que é fallback. Nunca é armazenamento de produção.
 
+## Formulário V2 (respostas estruturadas)
+
+O `/diagnostico` coleta **respostas estruturadas** (chips multiselect +
+cards de seleção única), não texto livre: presença digital, canais de
+aquisição, ferramentas de atendimento, organização, dificuldade principal,
+objetivo principal (**obrigatório**), prazo (**obrigatório**) e porte
+(opcional). Até 3 textareas opcionais de contexto. 5 etapas, mobile-first.
+Opções e rótulos: `src/app/diagnostico/schema.ts` (`*_OPCOES` / `*_LABEL`).
+
+**O scoring V1 não mudou** (mesmos pesos/faixas, `scoring_version = "v1"`).
+`src/lib/diagnostico-compose.ts` (`composeLegacyText`, função pura) traduz
+as respostas estruturadas para o texto legado (`comoConquistaClientes` /
+`dificuldade` / `objetivo` / `observacoes`) usando o vocabulário que os
+léxicos do scoring V1 já casam — o Form V2 melhora a **origem** do sinal,
+não o algoritmo. Decisão **U1**: `prazo` alimenta a urgência do V1 via essa
+composição (`o quanto antes` / `nos próximos 30 dias` → urgência;
+`só pesquisando` → exploratório). `form_version = "v2"`.
+
 ## Fluxo do Diagnóstico (endpoint `POST /api/diagnostico`)
 
 `src/components/DiagnosticoForm.tsx` → `fetch` → `src/app/api/diagnostico/route.ts`.
 
 Pipeline no servidor, nesta ordem: método (só POST, senão 405) →
-Content-Type `application/json` (senão 415) → limite de payload 16 KB
+Content-Type `application/json` (senão 415) → limite de payload 24 KB
 (senão 413) → JSON válido (senão 400) → honeypot (`website`) → tempo
 mínimo de preenchimento (2,5 s desde a montagem do form) → **rate limit
 por origem (2 janelas)** → **Cloudflare Turnstile** (obrigatório,
-server-side; senão 403) → validação Zod (`src/app/diagnostico/schema.ts`;
-inclui checagem leniente de URL em `site`/`googleBusiness`) → sanitização →
-deduplicação (mesma empresa+WhatsApp+e-mail em 2 min devolve o mesmo `id`,
-sem novo registro nem novo e-mail) → **scoring V1** (função pura, sem I/O —
-`src/lib/diagnostico-scoring.ts`) → **persistência** (lead + scoring numa
-única linha — `src/lib/diagnostico-store.ts`) → **só então** notificação
-por e-mail com o resumo comercial (`src/lib/email.ts`). Turnstile é checado
-**antes** de qualquer persistência/e-mail: falha = 403, nada gravado, nada
-enviado. O scoring roda **depois** do short-circuit de dedupe — uma
-duplicata devolve o resultado em cache e **não** é repontuada.
+server-side; senão 403) → validação Zod da **submissão V2**
+(`diagnosticoSubmissionSchema`; opção de multiselect fora do enum ou
+obrigatório ausente → 400) → sanitização → **regra de campo cruzado**
+(marcou que tem Site/Instagram/Perfil no Google mas não informou o link →
+400) → `composeLegacyText` + validação defensiva do `DiagnosticoInput`
+legado → deduplicação (mesma empresa+WhatsApp+e-mail em 2 min devolve o
+mesmo `id`) → **scoring V1** (função pura, sem I/O —
+`src/lib/diagnostico-scoring.ts`) → **persistência** (lead + scoring +
+respostas estruturadas numa única linha — `src/lib/diagnostico-store.ts`) →
+**só então** notificação por e-mail (`src/lib/email.ts`). Turnstile é
+checado **antes** de qualquer persistência/e-mail: falha = 403, nada
+gravado, nada enviado. O scoring roda **depois** do short-circuit de
+dedupe — uma duplicata devolve o resultado em cache e **não** é repontuada.
 
 ## Qualificação comercial automática (scoring V1)
 
@@ -177,13 +203,20 @@ versão com que foram pontuados, então a interpretação não se perde.
 
 **Persistência** (colunas de `diagnosticos`): `score` = potencial comercial ·
 `maturidade_digital` · `classificacao` · `prioridade` · `scoring_version` ·
-`resultado` (jsonb com o objeto completo). O **frontend não expõe** o score
-— o resultado é interno da Noryos.
+`resultado` (jsonb com o objeto completo). Colunas **aditivas do Form V2**
+(migração `supabase/migrations/2026-09-03_diagnostico_form_v2.sql`, não
+destrutiva — leads pré-v2 ficam NULL): `form_version` (`'v2'`) ·
+`respostas` (jsonb com as respostas estruturadas completas) · `prazo` ·
+`objetivo_principal` · `porte`. As colunas de texto legadas
+(`objetivo`/`dificuldade`/`observacoes`) seguem sendo gravadas (a partir do
+texto composto), para não quebrar consultas existentes. O **frontend não
+expõe** o score — o resultado é interno da Noryos.
 
-**E-mail interno** abre com o resumo comercial (potencial, maturidade,
-classificação, prioridade, gaps, serviços, próxima ação) e depois os dados
-crus do lead. O **subject** só ganha realce (`🔥 NN/100 — …`) em
-`prioridade_comercial` (85+); abaixo disso é neutro.
+**E-mail interno**: (1) resumo comercial no topo (potencial, maturidade,
+classificação, prioridade, gaps, serviços, próxima ação), (2) bloco
+compacto **"Respostas do lead (estruturado)"** (~8 linhas, sem despejar
+JSON), (3) dados crus do lead. O **subject** só ganha realce
+(`🔥 NN/100 — …`) em `prioridade_comercial` (85+); abaixo disso é neutro.
 
 **Rate limit** (`src/lib/rate-limit.ts`) — **duas janelas fixas por
 origem**, ambas checadas a cada envio; a primeira que estourar devolve 429:
@@ -271,16 +304,26 @@ Resend / a própria caixa). HTTP 200 do Resend **não** é prova de entrega.
 
 ## Como configurar analytics
 
-Preencha no `.env.local`: `NEXT_PUBLIC_GA4_ID`, `NEXT_PUBLIC_GTM_ID`,
-`NEXT_PUBLIC_META_PIXEL_ID`. Nenhum ID de teste está hardcoded — os
-scripts de analytics ainda **não estão injetados no layout** (ver
-pendência no `decisoes-site.md`); quando for ativar, adicionar em
-`src/app/layout.tsx` lendo de `src/lib/config.ts` (`analyticsConfig`).
+Preencha no `.env.local` / na Hostinger: `NEXT_PUBLIC_GTM_ID` (preferido —
+um container gerencia GA4 + Pixel) **ou** `NEXT_PUBLIC_GA4_ID`. O
+componente `src/components/Analytics.tsx` (montado no `layout.tsx`) injeta
+o script **só quando o ID existe** — sem ID, não renderiza nada (zero
+script, zero rede). Nenhum ID de teste é hardcoded.
 
-Eventos já nomeados em `analyticsEvents` (`src/lib/config.ts`), prontos
-pra disparar quando o analytics for plugado:
-`clique_whatsapp`, `iniciar_diagnostico`, `enviar_diagnostico`,
-`visualizar_solucao`, `contato`, `lead`.
+A camada de eventos (`src/lib/analytics.ts` → `track(evento, params)`)
+funciona mesmo sem tag: empurra `{ event, ...params }` pro
+`window.dataLayer`. **Nunca recebe PII** — só slug de opção, número de
+etapa, status HTTP e flags (reforçado por allowlist de chave + corte de
+string no `track`).
+
+Funil do Diagnóstico (Form V2), disparado por `DiagnosticoForm.tsx`:
+`iniciar_diagnostico` · `visualizar_etapa` · `avancar_etapa` ·
+`voltar_etapa` · `erro_validacao_etapa` · `turnstile_concluido` ·
+`enviar_diagnostico` · `diagnostico_enviado_com_sucesso` ·
+`diagnostico_envio_falhou`. Outros: `clique_whatsapp`,
+`visualizar_solucao`, `contato`, `lead`. Todos em `analyticsEvents`
+(`src/lib/config.ts`). Drop-off por etapa = comparar
+`visualizar_etapa` (etapa 1..5) com `diagnostico_enviado_com_sucesso`.
 
 ## Como adicionar um novo serviço
 

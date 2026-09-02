@@ -71,13 +71,24 @@ export function getSupabaseServerClient(): SupabaseClient | null {
  *   classificacao text,         -- baixa_prioridade | oportunidade_fria | boa_oportunidade | oportunidade_quente | prioridade_comercial
  *   prioridade text,            -- baixa | media | alta | critica
  *   scoring_version text,       -- 'v1'
- *   resultado jsonb             -- objeto completo e auditável (scores, criterios, gaps, servicosRecomendados, proximaAcao, qualidadeContato)
+ *   resultado jsonb,            -- objeto completo e auditável (scores, criterios, gaps, servicosRecomendados, proximaAcao, qualidadeContato)
+ *   -- Form V2 (respostas estruturadas — ver src/app/diagnostico/schema.ts +
+ *   -- src/lib/diagnostico-compose.ts). Aditivas; leads pré-v2 ficam NULL.
+ *   -- O scoring V1 NÃO mudou — estas colunas não entram no algoritmo.
+ *   form_version text,          -- 'v2' (NULL = formulário legado)
+ *   respostas jsonb,            -- respostas estruturadas completas (presenca, canais, ferramentas, organizacao, dificuldade_principal, objetivo_principal, prazo, porte, links, notas)
+ *   prazo text,                 -- o_quanto_antes | ate_30_dias | ate_90_dias | 3_a_6_meses | pesquisando
+ *   objetivo_principal text,    -- slug do objetivo principal (ver OBJETIVO_OPCOES)
+ *   porte text                  -- autonomo | 2_5 | 6_20 | 21_50 | 51_mais | nao_informar
  * );
  *
  * create index if not exists diagnosticos_classificacao_idx      on diagnosticos (classificacao);
  * create index if not exists diagnosticos_prioridade_idx         on diagnosticos (prioridade);
  * create index if not exists diagnosticos_maturidade_digital_idx on diagnosticos (maturidade_digital);
  * create index if not exists diagnosticos_score_idx              on diagnosticos (score);
+ * create index if not exists diagnosticos_form_version_idx       on diagnosticos (form_version);
+ * create index if not exists diagnosticos_prazo_idx              on diagnosticos (prazo);
+ * create index if not exists diagnosticos_objetivo_principal_idx on diagnosticos (objetivo_principal);
  *
  * -- Já existe um projeto Supabase? Migração ADITIVA, não-destrutiva (não
  * -- altera linhas existentes — as colunas novas ficam NULL):
@@ -86,7 +97,13 @@ export function getSupabaseServerClient(): SupabaseClient | null {
  * --   alter table diagnosticos add column if not exists prioridade         text;
  * --   alter table diagnosticos add column if not exists scoring_version    text;
  * --   (score e resultado já existiam; passam a ser preenchidos)
- * --   + os quatro create index acima.
+ * --   -- Form V2 (ver supabase/migrations/2026-09-03_diagnostico_form_v2.sql):
+ * --   alter table diagnosticos add column if not exists form_version       text;
+ * --   alter table diagnosticos add column if not exists respostas          jsonb;
+ * --   alter table diagnosticos add column if not exists prazo              text;
+ * --   alter table diagnosticos add column if not exists objetivo_principal text;
+ * --   alter table diagnosticos add column if not exists porte              text;
+ * --   + os create index acima.
  *
  * -- Rate limit compartilhado do endpoint /api/diagnostico (ver src/lib/rate-limit.ts).
  * -- Janela fixa, atômica por linha (`for update`) — funciona com múltiplas

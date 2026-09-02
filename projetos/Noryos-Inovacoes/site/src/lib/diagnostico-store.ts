@@ -2,8 +2,39 @@ import { randomUUID } from "node:crypto";
 import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { getSupabaseServerClient, DIAGNOSTICOS_TABLE } from "@/lib/supabase";
-import type { DiagnosticoInput } from "@/app/diagnostico/schema";
+import type { DiagnosticoInput, DiagnosticoSubmission } from "@/app/diagnostico/schema";
 import type { DiagnosticoScoring } from "@/lib/diagnostico-scoring";
+
+/**
+ * Objeto gravado em `respostas` (jsonb) — as respostas ESTRUTURADAS do Form
+ * V2, auditáveis, sem duplicar o que já vira coluna. Só campos preenchidos.
+ */
+function buildRespostas(sub: DiagnosticoSubmission) {
+  const orNull = (v: string | undefined) => (v && v.trim() ? v.trim() : null);
+  return {
+    presenca: sub.presenca,
+    links: {
+      site: orNull(sub.site),
+      instagram: orNull(sub.instagram),
+      google_perfil: orNull(sub.googleBusiness),
+    },
+    canais: sub.canais,
+    canais_outro: orNull(sub.canaisOutro),
+    ferramentas: sub.ferramentas,
+    organizacao: sub.organizacao || null,
+    dificuldade_principal: sub.dificuldadePrincipal || null,
+    dificuldade_outro: orNull(sub.dificuldadeOutro),
+    objetivo_principal: sub.objetivoPrincipal,
+    objetivo_outro: orNull(sub.objetivoOutro),
+    prazo: sub.prazo,
+    porte: sub.porte || null,
+    notas: {
+      aquisicao: orNull(sub.aquisicaoNota),
+      dificuldade: orNull(sub.dificuldadeNota),
+      objetivo: orNull(sub.objetivoNota),
+    },
+  };
+}
 
 /**
  * Persistência do Diagnóstico Digital.
@@ -43,16 +74,26 @@ const LOCAL_FILE = path.join(process.cwd(), ".data", "diagnostico.local.jsonl");
 /**
  * Monta a linha da tabela `diagnosticos`.
  *
+ * `data` (forma LEGADA) preenche as colunas de sempre — inclusive as de
+ * texto (`objetivo` / `dificuldade` / `observacoes`), que agora recebem o
+ * texto COMPOSTO a partir das respostas estruturadas (`composeLegacyText`).
+ * Consultas e o scoring que leem essas colunas continuam funcionando.
+ *
  * Quando `scoring` é passado (fluxo normal — o endpoint pontua entre o dedupe
  * e a persistência), grava também as colunas de qualificação:
  *   - `score`              → potencial comercial (0–100), score principal
  *   - `maturidade_digital` → maturidade digital (0–100)
  *   - `classificacao`, `prioridade`, `scoring_version` → filtro/relatório
  *   - `resultado` (jsonb)  → objeto completo e auditável do scoring
- * Sem `scoring` (ex.: chamada legada / teste), a linha vai sem qualificação —
- * as colunas ficam NULL, como nos registros pré-v1.
+ *
+ * Quando `sub` é passado (Form V2), grava as colunas ADITIVAS:
+ *   - `form_version` = "v2"
+ *   - `respostas` (jsonb) → respostas estruturadas completas
+ *   - `prazo`, `objetivo_principal`, `porte` → promovidas p/ filtro direto
+ * Sem `scoring`/`sub` (chamada legada / teste), essas colunas ficam NULL —
+ * como nos registros pré-v1 / pré-v2. Migração aditiva, nada destrutivo.
  */
-function toRow(data: DiagnosticoInput, scoring?: DiagnosticoScoring) {
+function toRow(data: DiagnosticoInput, scoring?: DiagnosticoScoring, sub?: DiagnosticoSubmission) {
   return {
     nome_empresa: data.nomeEmpresa,
     responsavel: data.responsavel,
@@ -77,19 +118,29 @@ function toRow(data: DiagnosticoInput, scoring?: DiagnosticoScoring) {
           resultado: scoring,
         }
       : {}),
+    ...(sub
+      ? {
+          form_version: "v2" as const,
+          respostas: buildRespostas(sub),
+          prazo: sub.prazo,
+          objetivo_principal: sub.objetivoPrincipal,
+          porte: sub.porte || null,
+        }
+      : {}),
   };
 }
 
 export async function persistDiagnostico(
   data: DiagnosticoInput,
-  scoring?: DiagnosticoScoring
+  scoring?: DiagnosticoScoring,
+  sub?: DiagnosticoSubmission
 ): Promise<PersistResult> {
   const supabase = getSupabaseServerClient();
 
   if (supabase) {
     const { data: inserted, error } = await supabase
       .from(DIAGNOSTICOS_TABLE)
-      .insert(toRow(data, scoring))
+      .insert(toRow(data, scoring, sub))
       .select("id, created_at")
       .single();
 
@@ -145,7 +196,7 @@ export async function persistDiagnostico(
   const record: StoredDiagnostico = { id: randomUUID(), createdAt: new Date().toISOString() };
   try {
     await mkdir(path.dirname(LOCAL_FILE), { recursive: true });
-    await appendFile(LOCAL_FILE, JSON.stringify({ ...record, ...toRow(data, scoring) }) + "\n", "utf8");
+    await appendFile(LOCAL_FILE, JSON.stringify({ ...record, ...toRow(data, scoring, sub) }) + "\n", "utf8");
     return { ok: true, record, driver: "file" };
   } catch (err) {
     console.error("[diagnostico] fallback local falhou:", err instanceof Error ? err.name : "erro");

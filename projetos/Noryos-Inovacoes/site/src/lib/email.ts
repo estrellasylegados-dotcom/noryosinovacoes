@@ -1,7 +1,18 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import type { DiagnosticoInput } from "@/app/diagnostico/schema";
+import {
+  type DiagnosticoInput,
+  type DiagnosticoSubmission,
+  CANAIS_LABEL,
+  DIFICULDADE_LABEL,
+  FERRAMENTAS_LABEL,
+  OBJETIVO_LABEL,
+  ORGANIZACAO_LABEL,
+  PORTE_LABEL,
+  PRAZO_LABEL,
+  PRESENCA_LABEL,
+} from "@/app/diagnostico/schema";
 import {
   CLASSIFICACAO_LABEL,
   PRIORIDADE_LABEL,
@@ -15,17 +26,18 @@ import {
  * (server-side, sem `NEXT_PUBLIC_`). Nunca vem do formulário — o visitante
  * não escolhe pra quem o sistema envia.
  *
+ * Ordem do corpo (o que a Noryos bate o olho primeiro):
+ *   1. RESUMO COMERCIAL (scoring V1) — potencial, classificação, próxima ação
+ *   2. RESPOSTAS DO LEAD (ESTRUTURADO) — bloco compacto das respostas V2
+ *   3. DADOS ENVIADOS PELO LEAD — os campos crus (texto composto + contato)
+ *
  * Provedores (`DIAGNOSTIC_EMAIL_PROVIDER`):
  * - `resend` (default) — transacional via API HTTP, `fetch` puro (sem SDK).
  * - `mock` — grava o e-mail em `.data/diagnostico.email-mock.jsonl` em vez de
  *   enviar. Só pra dev/teste (a suíte E2E usa isso pra não disparar e-mail
  *   real). Bloqueado em produção sem `DIAGNOSTIC_ALLOW_FILE_FALLBACK=1`.
  *
- * Trocar de provedor real é reescrever só `sendViaProvider()`.
- *
  * Esta função **nunca lança**. Devolve um status pra quem chamou registrar.
- * O lead já foi persistido antes daqui; se o e-mail falhar, o registro
- * continua no banco pra reenvio posterior.
  */
 
 export type EmailStatus =
@@ -35,6 +47,8 @@ export type EmailStatus =
 
 export type NotificationInput = {
   diagnostico: DiagnosticoInput;
+  /** Respostas estruturadas do Form V2. Ausente = chamada legada (sem o bloco). */
+  submission?: DiagnosticoSubmission;
   id: string;
   receivedAt: Date;
   /** Qualificação comercial V1 (determinística). Ver src/lib/diagnostico-scoring.ts. */
@@ -45,6 +59,8 @@ const PROVIDER = (process.env.DIAGNOSTIC_EMAIL_PROVIDER ?? "resend").toLowerCase
 
 /** Remetente. Em produção, usar um endereço no domínio verificado no provedor. */
 const FROM = process.env.DIAGNOSTIC_NOTIFICATION_FROM ?? "Noryos Diagnóstico <onboarding@resend.dev>";
+
+const RULE = "─".repeat(28);
 
 function fmtDateBR(d: Date) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -72,9 +88,9 @@ function escHtml(s?: string | null): string {
 }
 
 /**
- * Resumo comercial (topo do e-mail) — o que a Noryos bate o olho primeiro.
- * Emoji/chamada forte no subject SÓ pra `prioridade_comercial` (85+): abaixo
- * disso o subject é neutro, pra não banalizar o alerta.
+ * Resumo comercial (topo do e-mail). Emoji/chamada forte no subject SÓ pra
+ * `prioridade_comercial` (85+): abaixo disso o subject é neutro, pra não
+ * banalizar o alerta.
  */
 function buildAnaliseComercial(d: DiagnosticoInput, s: DiagnosticoScoring) {
   const alta = s.classificacao === "prioridade_comercial";
@@ -94,8 +110,7 @@ function buildAnaliseComercial(d: DiagnosticoInput, s: DiagnosticoScoring) {
     `Principais gaps:\n${bullets(gapsTitulos)}\n\n` +
     `Serviços sugeridos:\n${bullets(s.servicosRecomendados)}\n\n` +
     `Próxima ação:\n${s.proximaAcao}\n\n` +
-    `Scoring: ${s.scoringVersion}\n` +
-    `${"─".repeat(28)}\nDADOS ENVIADOS PELO LEAD\n\n`;
+    `Scoring: ${s.scoringVersion}\n`;
 
   const chipBg = alta ? "#fee2e2" : "#e0f2fe";
   const chipFg = alta ? "#991b1b" : "#075985";
@@ -122,12 +137,74 @@ function buildAnaliseComercial(d: DiagnosticoInput, s: DiagnosticoScoring) {
   return { subject, text, html };
 }
 
-export function buildNotificationBody({ diagnostico: d, id, receivedAt, scoring }: NotificationInput) {
+/**
+ * Bloco compacto das respostas ESTRUTURADAS do Form V2 — vem logo depois do
+ * resumo comercial e antes dos dados crus. Nunca despeja o JSON: são ~8
+ * linhas de rótulo → valor legível.
+ */
+function buildRespostasEstruturadas(sub: DiagnosticoSubmission) {
+  const listar = <K extends string>(slugs: readonly K[], label: Record<K, string>) =>
+    slugs.length ? slugs.map((s) => label[s] ?? s).join(", ") : "—";
+
+  const canais = (() => {
+    const base = listar(
+      sub.canais.filter((c) => c !== "outro") as (keyof typeof CANAIS_LABEL)[],
+      CANAIS_LABEL
+    );
+    const outro = sub.canais.includes("outro") && sub.canaisOutro?.trim() ? `Outro: ${sub.canaisOutro.trim()}` : "";
+    return [base === "—" ? "" : base, outro].filter(Boolean).join(", ") || "—";
+  })();
+
+  const dificuldade =
+    sub.dificuldadePrincipal === "outro"
+      ? `Outro: ${sub.dificuldadeOutro?.trim() || "—"}`
+      : sub.dificuldadePrincipal
+        ? DIFICULDADE_LABEL[sub.dificuldadePrincipal]
+        : "—";
+
+  const objetivo =
+    sub.objetivoPrincipal === "outro"
+      ? `Outro: ${sub.objetivoOutro?.trim() || "—"}`
+      : OBJETIVO_LABEL[sub.objetivoPrincipal];
+
+  const rows: Array<[string, string]> = [
+    ["Presença digital", listar(sub.presenca as (keyof typeof PRESENCA_LABEL)[], PRESENCA_LABEL)],
+    ["Como consegue clientes", canais],
+    ["Ferramentas", listar(sub.ferramentas as (keyof typeof FERRAMENTAS_LABEL)[], FERRAMENTAS_LABEL)],
+    ["Organização do atendimento", sub.organizacao ? ORGANIZACAO_LABEL[sub.organizacao] : "—"],
+    ["Maior dificuldade", dificuldade],
+    ["Objetivo principal", objetivo],
+    ["Prazo para começar", PRAZO_LABEL[sub.prazo]],
+    ["Porte", sub.porte && sub.porte !== "nao_informar" ? PORTE_LABEL[sub.porte] : "—"],
+  ];
+
+  const text =
+    `RESPOSTAS DO LEAD (ESTRUTURADO)\n\n` + rows.map(([k, v]) => `${k}: ${v}`).join("\n") + `\n\n${RULE}\n`;
+
+  const html =
+    `<h3 style="margin:0 0 12px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Respostas do lead (estruturado)</h3>` +
+    `<table style="border-collapse:collapse;margin-bottom:14px">` +
+    rows
+      .map(
+        ([k, v]) =>
+          `<tr><td style="padding:4px 12px 4px 0;color:#64748b;vertical-align:top;white-space:nowrap">${k}</td><td style="padding:4px 0;color:#0f172a">${escHtml(v)}</td></tr>`
+      )
+      .join("") +
+    `</table><hr style="border:none;border-top:1px solid #e2e8f0;margin:18px 0"/>`;
+
+  return { text, html };
+}
+
+export function buildNotificationBody({ diagnostico: d, submission, id, receivedAt, scoring }: NotificationInput) {
   const analise = buildAnaliseComercial(d, scoring);
   const subject = analise.subject;
+  const estruturado = submission ? buildRespostasEstruturadas(submission) : null;
 
   const text =
     analise.text +
+    `\n${RULE}\n` +
+    (estruturado ? `\n${estruturado.text}\n` : "") +
+    `\nDADOS ENVIADOS PELO LEAD\n\n` +
     line("Empresa", d.nomeEmpresa) +
     line("Responsável", d.responsavel) +
     line("E-mail", d.email) +
@@ -149,6 +226,7 @@ export function buildNotificationBody({ diagnostico: d, id, receivedAt, scoring 
 
   const html =
     analise.html +
+    (estruturado ? estruturado.html : "") +
     `<h3 style="margin:0 0 12px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:0.06em">Dados enviados pelo lead</h3>` +
     `<table style="border-collapse:collapse">` +
     row("Empresa", d.nomeEmpresa) +
@@ -182,9 +260,9 @@ async function sendViaMock(to: string, subject: string, text: string): Promise<E
     await mkdir(path.dirname(MOCK_FILE), { recursive: true });
     await appendFile(
       MOCK_FILE,
-      // `textPreview` cobre o bloco de análise comercial inteiro (topo do
-      // corpo) — a suíte E2E asserta o conteúdo do resumo aqui.
-      JSON.stringify({ at: new Date().toISOString(), to, subject, textPreview: text.slice(0, 1400), providerId }) + "\n",
+      // `textPreview` cobre o resumo comercial + o bloco estruturado — a
+      // suíte E2E asserta o conteúdo aqui.
+      JSON.stringify({ at: new Date().toISOString(), to, subject, textPreview: text.slice(0, 2400), providerId }) + "\n",
       "utf8"
     );
   } catch {

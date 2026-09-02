@@ -5,7 +5,8 @@ import {
   SCORING_VERSION,
   type DiagnosticoScoring,
 } from "../src/lib/diagnostico-scoring";
-import type { DiagnosticoInput } from "../src/app/diagnostico/schema";
+import { submissionToDiagnosticoInput } from "../src/lib/diagnostico-compose";
+import type { DiagnosticoInput, DiagnosticoSubmission } from "../src/app/diagnostico/schema";
 
 /**
  * Testes unitários do scoring V1 (função PURA — sem browser, sem servidor).
@@ -353,4 +354,131 @@ test("completar e-mail/cidade/segmento NÃO muda o potencial comercial", () => {
   expect(comContato.potencialComercial).toBe(semContato.potencialComercial);
   expect(comContato.maturidadeDigital).toBe(semContato.maturidadeDigital);
   expect(comContato.qualidadeContato).toEqual({ email: true, cidade: true, segmento: true });
+});
+
+// ---------------------------------------------------------------------------
+// Form V2 → scoring V1 (compatibilidade) — asserta FAIXA, não número exato.
+// O scoring V1 não mudou; o Form V2 melhora a ORIGEM do sinal. Os 3 personas
+// reproduzem o espalhamento V1 (ver a proposta da Fase 1).
+// ---------------------------------------------------------------------------
+function submission(over: Partial<DiagnosticoSubmission> = {}): DiagnosticoSubmission {
+  return {
+    nomeEmpresa: "Empresa Teste",
+    responsavel: "Fulano",
+    whatsapp: "51999990000",
+    email: "",
+    cidade: "",
+    segmento: "",
+    porte: "",
+    presenca: [],
+    site: "",
+    instagram: "",
+    googleBusiness: "",
+    canais: [],
+    canaisOutro: "",
+    aquisicaoNota: "",
+    ferramentas: [],
+    organizacao: "",
+    dificuldadePrincipal: "",
+    dificuldadeOutro: "",
+    dificuldadeNota: "",
+    objetivoPrincipal: "mais_clientes",
+    objetivoOutro: "",
+    objetivoNota: "",
+    prazo: "ate_90_dias",
+    consentimento: true,
+    ...over,
+  } as DiagnosticoSubmission;
+}
+const scoreV2 = (s: DiagnosticoSubmission) => scoreDiagnostico(submissionToDiagnosticoInput(s));
+
+test("V2 — lead FORTE (sem site, indicação/IG, atendimento ruim, crescer, o quanto antes) → prioridade comercial", () => {
+  const r = scoreV2(
+    submission({
+      email: "carla@odonto.com",
+      cidade: "Campinas",
+      segmento: "Odontologia",
+      porte: "6_20",
+      presenca: ["instagram", "google_perfil"],
+      instagram: "@odontosorriso",
+      googleBusiness: "https://g.page/odonto-sorriso",
+      canais: ["indicacao", "instagram_redes"],
+      aquisicaoNota: "Quase tudo é indicação e Instagram. Impulsionei post sem estratégia.",
+      ferramentas: ["whatsapp_comum", "planilhas"],
+      organizacao: "perco_oportunidades",
+      dificuldadePrincipal: "atendimento_desorganizado",
+      dificuldadeNota: "Some paciente entre o orçamento e a marcação.",
+      objetivoPrincipal: "mais_clientes",
+      objetivoNota: "Quero crescer e parar de depender de indicação, montar um processo.",
+      prazo: "o_quanto_antes",
+    })
+  );
+  expect(r.scoringVersion).toBe("v1");
+  expect(r.potencialComercial).toBeGreaterThanOrEqual(82);
+  expect(r.classificacao).toBe("prioridade_comercial");
+  expect(r.prioridade).toBe("critica");
+  expect(r.maturidadeDigital).toBeLessThanOrEqual(55);
+  expect(r.servicosRecomendados).toEqual([
+    "Presença Digital",
+    "Automações",
+    "Aquisição e Performance",
+  ]);
+  expect(r.proximaAcao).toContain("24h");
+  expect(r.proximaAcao).toContain("urgência");
+});
+
+test("V2 — lead INTERMEDIÁRIO (site+IG+GBP, IG/indicação, manual, automatizar, 90 dias) → boa oportunidade", () => {
+  const r = scoreV2(
+    submission({
+      cidade: "Joinville",
+      segmento: "Móveis planejados",
+      porte: "2_5",
+      presenca: ["site", "instagram", "google_perfil"],
+      site: "marcenarianorte.com.br",
+      instagram: "instagram.com/marcenarianorte",
+      googleBusiness: "https://g.page/marcenaria-norte",
+      canais: ["instagram_redes", "indicacao"],
+      ferramentas: ["whatsapp_business", "planilhas"],
+      organizacao: "manual",
+      dificuldadePrincipal: "falta_automacao",
+      objetivoPrincipal: "automatizar_atendimento",
+      objetivoNota: "Chega bastante orçamento pelo Instagram mas me perco pra dar seguimento.",
+      prazo: "ate_90_dias",
+    })
+  );
+  expect(r.scoringVersion).toBe("v1");
+  expect(r.classificacao).toBe("boa_oportunidade");
+  expect(r.potencialComercial).toBeGreaterThanOrEqual(45);
+  expect(r.potencialComercial).toBeLessThanOrEqual(69);
+  expect(["media", "alta"]).toContain(r.prioridade);
+  expect(r.maturidadeDigital).toBeGreaterThanOrEqual(55);
+  expect(r.servicosRecomendados).toContain("Automações");
+});
+
+test("V2 — lead EXPLORATÓRIO (tudo pronto, Ads+SEO+CRM, organizado, entendendo, pesquisando) → baixa prioridade", () => {
+  const r = scoreV2(
+    submission({
+      segmento: "Contabilidade",
+      porte: "21_50",
+      presenca: ["site", "instagram", "google_perfil", "blog"],
+      site: "contabilapice.com.br",
+      instagram: "@contabilapice",
+      googleBusiness: "https://g.page/contabil-apice",
+      canais: ["google_ads", "conteudo_seo", "indicacao", "email_marketing"],
+      aquisicaoNota: "Temos time comercial e CRM.",
+      ferramentas: ["crm", "sistema_proprio", "agenda_online"],
+      organizacao: "organizado",
+      dificuldadePrincipal: "",
+      objetivoPrincipal: "entendendo",
+      objetivoNota: "Só quero saber se dá pra melhorar alguma coisa.",
+      prazo: "pesquisando",
+    })
+  );
+  expect(r.scoringVersion).toBe("v1");
+  expect(r.classificacao).toBe("baixa_prioridade");
+  expect(r.potencialComercial).toBeLessThanOrEqual(15);
+  expect(r.prioridade).toBe("baixa");
+  expect(r.gaps).toHaveLength(0);
+  expect(r.servicosRecomendados).toHaveLength(0);
+  expect(r.maturidadeDigital).toBeGreaterThanOrEqual(90);
 });

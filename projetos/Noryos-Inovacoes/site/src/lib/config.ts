@@ -54,12 +54,22 @@ export const analyticsConfig = {
   metaPixelId: process.env.NEXT_PUBLIC_META_PIXEL_ID ?? "",
 } as const;
 
-/** Nomes de evento usados em toda a aplicação — ver README → Analytics. */
+/** Nomes de evento usados em toda a aplicação — ver README → Analytics.
+ *  Sem PII: os eventos do Diagnóstico carregam no máximo número de etapa,
+ *  status HTTP e duração. Nunca nome/e-mail/telefone/empresa/texto livre. */
 export const analyticsEvents = {
   clickWhatsapp: "clique_whatsapp",
-  startDiagnostico: "iniciar_diagnostico",
-  submitDiagnostico: "enviar_diagnostico",
   viewSolucao: "visualizar_solucao",
   contato: "contato",
   lead: "lead",
+  // Funil do Diagnóstico Digital (Form V2)
+  startDiagnostico: "iniciar_diagnostico",
+  viewStepDiagnostico: "visualizar_etapa",
+  nextStepDiagnostico: "avancar_etapa",
+  prevStepDiagnostico: "voltar_etapa",
+  stepErrorDiagnostico: "erro_validacao_etapa",
+  turnstileDoneDiagnostico: "turnstile_concluido",
+  submitDiagnostico: "enviar_diagnostico",
+  successDiagnostico: "diagnostico_enviado_com_sucesso",
+  errorDiagnostico: "diagnostico_envio_falhou",
 } as const;

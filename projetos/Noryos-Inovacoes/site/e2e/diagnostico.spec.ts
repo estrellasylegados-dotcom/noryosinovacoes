@@ -4,16 +4,17 @@ import path from "node:path";
 import { watchConsole, attachTurnstileToken } from "./helpers";
 
 /**
- * A maior parte dos casos vai só até o botão de envio habilitado (sem
- * enviar), pra não gerar ruído. Os casos "envia o formulário" fazem um POST
- * real contra /api/diagnostico. O servidor sob teste (ver
- * playwright.config.ts → webServer.env) usa provedor de e-mail `mock` (grava
- * em .data/diagnostico.email-mock.jsonl, nada de e-mail real) e fallback
- * local de persistência. Cada teste de envio manda um X-Forwarded-For
- * próprio pra ter bucket de rate limit isolado. O honeypot nunca é tocado.
+ * Fluxo do formulário do Diagnóstico Digital — Form V2 (5 etapas, chips
+ * multiselect + cards de seleção única, links condicionais, objetivo/prazo
+ * obrigatórios).
  *
- * Os campos são buscados DENTRO do <form> — fora dele existe o botão
- * flutuante de WhatsApp, cujo aria-label colide com o label "WhatsApp".
+ * A maioria dos casos vai só até o botão de envio (sem enviar). Os casos
+ * "envia o formulário" fazem POST real contra /api/diagnostico. O servidor
+ * sob teste (playwright.config.ts → webServer.env) usa e-mail `mock` e
+ * fallback local de persistência. Cada teste de envio manda um
+ * X-Forwarded-For próprio (bucket de rate limit isolado). O honeypot nunca é
+ * tocado. Campos buscados DENTRO do <form> (fora dele existe o botão
+ * flutuante de WhatsApp).
  */
 function form(page: Page) {
   return page.locator("form");
@@ -30,14 +31,33 @@ const recordsFor = (empresa: string) => readJsonl(LOCAL_STORE).filter((r) => r.n
 const emailsFor = (empresa: string) =>
   readJsonl(EMAIL_MOCK).filter((e) => String(e.subject ?? "").includes(empresa));
 
-async function preencherPasso1(page: Page) {
-  await form(page).getByLabel("Nome da empresa").fill("Empresa Teste E2E");
+async function preencherEtapa1(page: Page, empresa = "Empresa Teste E2E") {
+  await form(page).getByLabel("Nome da empresa").fill(empresa);
   await form(page).getByLabel("Seu nome").fill("Fulano de Teste");
   await form(page).getByLabel("WhatsApp").fill("11999998888");
 }
 
-test.describe("Diagnóstico Digital", () => {
-  test("renderiza a página e o formulário no passo 1", async ({ page }) => {
+const continuar = (page: Page) => page.getByRole("button", { name: "Continuar" }).click();
+
+/** Etapa 1 → 5, escolhendo objetivo + prazo + consentimento, pronta pra enviar. */
+async function preencherTudo(page: Page, empresa: string) {
+  await preencherEtapa1(page, empresa);
+  await form(page).getByLabel("E-mail").fill("qa+e2e@example.com");
+  await continuar(page); // → 2
+  await continuar(page); // → 3
+  await continuar(page); // → 4
+  await continuar(page); // → 5
+  await expect(page.getByText("Etapa 5 de 5")).toBeVisible();
+  await form(page).getByRole("radio", { name: "Conseguir mais clientes" }).check();
+  await form(page).getByRole("radio", { name: "Nos próximos 90 dias" }).check();
+  await form(page).getByRole("checkbox").check(); // consentimento (único checkbox na etapa 5)
+  // O endpoint descarta submissões abaixo de MIN_FILL_TIME_MS (2500 ms desde a
+  // montagem do form). O Playwright preenche rápido demais — simula o humano.
+  await page.waitForTimeout(3000);
+}
+
+test.describe("Diagnóstico Digital — Form V2", () => {
+  test("renderiza a página e a etapa 1", async ({ page }) => {
     const console_ = watchConsole(page);
     const res = await page.goto("/diagnostico");
     expect(res?.status()).toBe(200);
@@ -49,66 +69,68 @@ test.describe("Diagnóstico Digital", () => {
     await expect(form(page).getByLabel("Nome da empresa")).toBeVisible();
     await expect(form(page).getByLabel("Seu nome")).toBeVisible();
     await expect(form(page).getByLabel("WhatsApp")).toBeVisible();
-
-    // honeypot presente mas fora do fluxo visível
     await expect(page.locator('input[name="website"]')).toBeHidden();
 
     console_.assertClean();
   });
 
-  test("bloqueia o avanço com os campos obrigatórios vazios", async ({ page }) => {
+  test("bloqueia o avanço da etapa 1 com os obrigatórios vazios", async ({ page }) => {
     await page.goto("/diagnostico");
-    await page.getByRole("button", { name: "Continuar" }).click();
-    // continua no passo 1 — nada de avançar sem os obrigatórios
+    await continuar(page);
+    // validação nativa do HTML5 barra o submit e foca o 1º campo obrigatório
     await expect(page.getByText("Etapa 1 de 5")).toBeVisible();
     await expect(page.getByText("Etapa 2 de 5")).toHaveCount(0);
+    await expect(form(page).getByLabel("Nome da empresa")).toBeFocused();
+    await expect(form(page).getByLabel("Nome da empresa")).toHaveJSProperty("validity.valid", false);
   });
 
-  test("preenche e percorre os 5 passos até o botão de envio", async ({ page }) => {
+  test("percorre as 5 etapas usando chips e cards", async ({ page }) => {
     const console_ = watchConsole(page);
     await page.goto("/diagnostico");
 
-    // Passo 1 — obrigatórios
-    await preencherPasso1(page);
-    await page.getByRole("button", { name: "Continuar" }).click();
+    // Etapa 1
+    await preencherEtapa1(page);
+    await form(page).getByRole("radio", { name: "2–5 pessoas" }).check();
+    await continuar(page);
     await expect(page.getByText("Etapa 2 de 5")).toBeVisible();
 
-    // Passo 2 — presença digital (opcional)
-    await form(page).getByLabel("Site atual (se tiver)").fill("exemplo.com.br");
-    await page.getByRole("button", { name: "Continuar" }).click();
+    // Etapa 2 — multiselect + link condicional
+    await form(page).getByRole("checkbox", { name: "Instagram", exact: true }).check();
+    await expect(form(page).getByLabel(/@ ou link do Instagram/i)).toBeVisible();
+    await form(page).getByLabel(/@ ou link do Instagram/i).fill("@minhaempresa");
+    await continuar(page);
     await expect(page.getByText("Etapa 3 de 5")).toBeVisible();
 
-    // Passo 3 — aquisição (opcional)
-    await form(page)
-      .getByLabel(/Como sua empresa consegue clientes hoje/i)
-      .fill("Indicação e Instagram.");
-    await page.getByRole("button", { name: "Continuar" }).click();
+    // Etapa 3 — canais + "Outro"
+    await form(page).getByRole("checkbox", { name: "Indicação / boca a boca" }).check();
+    await form(page).getByRole("checkbox", { name: "Outro" }).check();
+    await expect(form(page).getByLabel("Qual outro canal?")).toBeVisible();
+    await form(page).getByLabel("Qual outro canal?").fill("Eventos e feiras");
+    await continuar(page);
     await expect(page.getByText("Etapa 4 de 5")).toBeVisible();
 
-    // Passo 4 — atendimento (opcional)
-    await form(page)
-      .getByLabel(/maior dificuldade com atendimento/i)
-      .fill("Responder rápido no WhatsApp.");
-    await page.getByRole("button", { name: "Continuar" }).click();
+    // Etapa 4 — ferramentas + organização + dificuldade
+    await form(page).getByRole("checkbox", { name: "Planilhas" }).check();
+    await form(page).getByRole("radio", { name: "Funciona, mas ainda é bem manual" }).check();
+    await form(page).getByRole("radio", { name: "Atendimento desorganizado" }).check();
+    await continuar(page);
     await expect(page.getByText("Etapa 5 de 5")).toBeVisible();
 
-    // Passo 5 — objetivos + consentimento LGPD (obrigatório)
-    const consent = form(page).getByRole("checkbox");
-    await expect(consent).not.toBeChecked();
-
-    // sem consentimento não envia — o botão de envio continua na tela
+    // Etapa 5 — objetivo + prazo obrigatórios + consentimento
     const enviar = page.getByRole("button", { name: "Solicitar meu diagnóstico" });
-    await expect(enviar).toBeVisible();
     await enviar.click();
+    await expect(form(page).getByRole("alert")).toContainText(/objetivo/i);
     await expect(page.getByText("Etapa 5 de 5")).toBeVisible();
-    await expect(page.getByText("Diagnóstico recebido.")).toHaveCount(0);
 
-    // com consentimento, o botão fica pronto pra envio (não clicamos)
-    await consent.check();
-    await expect(consent).toBeChecked();
+    await form(page).getByRole("radio", { name: "Automatizar atendimento / processos" }).check();
+    await form(page).getByRole("radio", { name: "Nos próximos 30 dias" }).check();
+    await enviar.click();
+    await expect(form(page).getByRole("alert")).toContainText(/aceitar o contato/i);
+
+    await form(page).getByRole("checkbox").check(); // consentimento
+    await expect(form(page).getByRole("checkbox")).toBeChecked();
     await expect(enviar).toBeEnabled();
 
-    // link da Política de Privacidade funciona
     await expect(form(page).getByRole("link", { name: "Política de Privacidade" })).toHaveAttribute(
       "href",
       "/politica-de-privacidade"
@@ -117,46 +139,51 @@ test.describe("Diagnóstico Digital", () => {
     console_.assertClean();
   });
 
-  test("dá pra voltar um passo sem perder o que foi digitado", async ({ page }) => {
+  test("marcou Site mas não informou o link → não avança da etapa 2", async ({ page }) => {
     await page.goto("/diagnostico");
-    await preencherPasso1(page);
-    await page.getByRole("button", { name: "Continuar" }).click();
+    await preencherEtapa1(page);
+    await continuar(page);
     await expect(page.getByText("Etapa 2 de 5")).toBeVisible();
 
-    await page.getByRole("button", { name: "Voltar" }).click();
-    await expect(page.getByText("Etapa 1 de 5")).toBeVisible();
-    await expect(form(page).getByLabel("Nome da empresa")).toHaveValue("Empresa Teste E2E");
+    await form(page).getByRole("checkbox", { name: "Site", exact: true }).check();
+    await expect(form(page).getByLabel("Endereço do site")).toBeVisible();
+    await continuar(page);
+    // o campo de link revelado é obrigatório (regra de campo cruzado): não avança
+    await expect(page.getByText("Etapa 2 de 5")).toBeVisible();
+    await expect(page.getByText("Etapa 3 de 5")).toHaveCount(0);
+    await expect(form(page).getByLabel("Endereço do site")).toHaveJSProperty("validity.valid", false);
+
+    await form(page).getByLabel("Endereço do site").fill("minhaempresa.com.br");
+    await continuar(page);
+    await expect(page.getByText("Etapa 3 de 5")).toBeVisible();
   });
 
-  /** Preenche as 5 etapas com dados de teste e para no passo 5 com consentimento marcado. */
-  async function preencherTudo(page: Page, empresa: string) {
-    await form(page).getByLabel("Nome da empresa").fill(empresa);
-    await form(page).getByLabel("Seu nome").fill("Rafael Teste");
-    await form(page).getByLabel("WhatsApp").fill("11999998888");
-    await form(page).getByLabel("E-mail").fill("qa+e2e@example.com");
-    await page.getByRole("button", { name: "Continuar" }).click();
-    await form(page).getByLabel("Site atual (se tiver)").fill("exemplo.com.br");
-    await page.getByRole("button", { name: "Continuar" }).click();
-    await form(page).getByLabel(/Como sua empresa consegue clientes hoje/i).fill("Indicação.");
-    await page.getByRole("button", { name: "Continuar" }).click();
-    await form(page).getByLabel(/maior dificuldade com atendimento/i).fill("Responder rápido no WhatsApp.");
-    await page.getByRole("button", { name: "Continuar" }).click();
-    await expect(page.getByText("Etapa 5 de 5")).toBeVisible();
-    await form(page).getByRole("checkbox").check();
-    // O endpoint descarta submissões abaixo de MIN_FILL_TIME_MS (2500ms desde a
-    // montagem do form) como bot. O Playwright preenche rápido demais — esta
-    // espera simula o tempo de um humano.
-    await page.waitForTimeout(3000);
-  }
+  test("Voltar preserva texto, chips e cards", async ({ page }) => {
+    await page.goto("/diagnostico");
+    await preencherEtapa1(page, "Empresa Memória E2E");
+    await continuar(page);
 
-  test("envia o formulário: loading, sucesso, 1 registro e 1 e-mail", async ({ page }) => {
+    await form(page).getByRole("checkbox", { name: "Instagram", exact: true }).check();
+    await form(page).getByLabel(/@ ou link do Instagram/i).fill("@lembrar");
+    await continuar(page); // → 3
+    await form(page).getByRole("checkbox", { name: "Indicação / boca a boca" }).check();
+
+    // volta até a etapa 1 e avança de novo
+    await page.getByRole("button", { name: "Voltar" }).click(); // → 2
+    await expect(form(page).getByRole("checkbox", { name: "Instagram", exact: true })).toBeChecked();
+    await expect(form(page).getByLabel(/@ ou link do Instagram/i)).toHaveValue("@lembrar");
+    await page.getByRole("button", { name: "Voltar" }).click(); // → 1
+    await expect(form(page).getByLabel("Nome da empresa")).toHaveValue("Empresa Memória E2E");
+
+    await continuar(page); // → 2
+    await continuar(page); // → 3
+    await expect(form(page).getByRole("checkbox", { name: "Indicação / boca a boca" })).toBeChecked();
+  });
+
+  test("envia o formulário: loading, sucesso, 1 registro V2 e 1 e-mail", async ({ page }) => {
     const console_ = watchConsole(page);
     const empresa = `TESTE NORYOS QA E2E ${Date.now()}`;
-    await page.setExtraHTTPHeaders({ "x-forwarded-for": "198.51.100.21" });
-
-    // Injeta o turnstileToken no POST (widget não renderiza sem site key no
-    // build de teste; servidor em TURNSTILE_MODE=mock aceita "pass") e atrasa
-    // 800 ms pra o estado de loading ser observável de forma determinística.
+    await page.setExtraHTTPHeaders({ "x-forwarded-for": "198.51.100.31" });
     await attachTurnstileToken(page, { delayMs: 800 });
 
     await page.goto("/diagnostico");
@@ -168,7 +195,6 @@ test.describe("Diagnóstico Digital", () => {
     );
     await enviar.click();
 
-    // estado de loading enquanto a requisição está em voo
     await expect(page.getByRole("button", { name: "Enviando..." })).toBeVisible();
     await expect(page.getByRole("button", { name: "Enviando..." })).toBeDisabled();
 
@@ -177,36 +203,35 @@ test.describe("Diagnóstico Digital", () => {
     const body = await response.json();
     expect(body.ok).toBe(true);
     expect(body.id).toBeTruthy();
-    expect(body.email).toBe("sent"); // provedor mock no ambiente de teste
+    expect(body.email).toBe("sent");
 
     await expect(page.getByText("Diagnóstico recebido.")).toBeVisible();
 
     const registros = recordsFor(empresa);
     expect(registros).toHaveLength(1);
     expect(registros[0].id).toBe(body.id);
-    expect(registros[0].responsavel).toBe("Rafael Teste");
+    expect(registros[0].form_version).toBe("v2");
+    expect(registros[0].objetivo_principal).toBe("mais_clientes");
+    expect(registros[0].prazo).toBe("ate_90_dias");
+    expect((registros[0].respostas as Record<string, unknown>)).toBeTruthy();
 
-    const mails = emailsFor(empresa);
-    expect(mails).toHaveLength(1);
-    expect(mails[0].to).toBe("qa-inbox@noryos.test");
+    expect(emailsFor(empresa)).toHaveLength(1);
 
     console_.assertClean();
   });
 
   test("duplo clique no envio não gera segundo registro nem segundo e-mail", async ({ page }) => {
     const empresa = `TESTE NORYOS QA DUP-E2E ${Date.now()}`;
-    await page.setExtraHTTPHeaders({ "x-forwarded-for": "198.51.100.22" });
+    await page.setExtraHTTPHeaders({ "x-forwarded-for": "198.51.100.32" });
     await attachTurnstileToken(page);
 
     await page.goto("/diagnostico");
     await preencherTudo(page, empresa);
 
-    // Dois cliques em sequência imediata, antes do React desabilitar o botão.
-    // A trava `inFlight` no componente + o dedupe no endpoint garantem um só.
     await page.getByRole("button", { name: "Solicitar meu diagnóstico" }).dblclick();
 
     await expect(page.getByText("Diagnóstico recebido.")).toBeVisible();
-    await page.waitForTimeout(600); // deixa um eventual 2º POST chegar
+    await page.waitForTimeout(600);
 
     expect(recordsFor(empresa)).toHaveLength(1);
     expect(emailsFor(empresa)).toHaveLength(1);
@@ -216,10 +241,10 @@ test.describe("Diagnóstico Digital", () => {
 test.describe("Diagnóstico Digital — mobile 390px", () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
-  test("fluxo principal completo no mobile: sem scroll horizontal, sucesso, 1 registro", async ({ page }) => {
+  test("fluxo completo no mobile: sem scroll horizontal, sucesso, 1 registro", async ({ page }) => {
     const console_ = watchConsole(page);
     const empresa = `TESTE NORYOS QA MOBILE ${Date.now()}`;
-    await page.setExtraHTTPHeaders({ "x-forwarded-for": "198.51.100.23" });
+    await page.setExtraHTTPHeaders({ "x-forwarded-for": "198.51.100.33" });
     await attachTurnstileToken(page);
 
     await page.goto("/diagnostico");
@@ -228,14 +253,8 @@ test.describe("Diagnóstico Digital — mobile 390px", () => {
       page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
     expect(await noHScroll()).toBe(true);
 
-    await form(page).getByLabel("Nome da empresa").fill(empresa);
-    await form(page).getByLabel("Seu nome").fill("Rafael Teste");
-    await form(page).getByLabel("WhatsApp").fill("11999998888");
-    await page.getByRole("button", { name: "Continuar" }).click();
-    for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Continuar" }).click();
-    await expect(page.getByText("Etapa 5 de 5")).toBeVisible();
-    await form(page).getByRole("checkbox").check();
-    await page.waitForTimeout(3000);
+    await preencherTudo(page, empresa);
+    expect(await noHScroll()).toBe(true);
 
     const [response] = await Promise.all([
       page.waitForResponse((r) => r.url().includes("/api/diagnostico") && r.request().method() === "POST"),
