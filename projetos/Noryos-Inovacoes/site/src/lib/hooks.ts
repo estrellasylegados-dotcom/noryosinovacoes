@@ -108,7 +108,19 @@ export function useScrollProgress<T extends HTMLElement = HTMLDivElement>(): [
     const io = new IntersectionObserver(
       ([entry]) => {
         active = entry.isIntersecting;
-        if (active && !raf) raf = requestAnimationFrame(measure);
+        if (active) {
+          if (!raf) raf = requestAnimationFrame(measure);
+        } else {
+          // Fora da viewport o loop de rAF para — sem isto, um scroll rápido
+          // deixa `progress` congelado num valor parcial (a barra do fluxo
+          // ficava "presa" no meio, §27). Resolve pros extremos conforme o
+          // lado por onde a seção saiu.
+          const p = entry.boundingClientRect.top < 0 ? 1 : 0;
+          if (p !== last) {
+            last = p;
+            setProgress(p);
+          }
+        }
       },
       { threshold: 0 }
     );

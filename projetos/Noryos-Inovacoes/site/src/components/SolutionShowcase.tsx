@@ -18,15 +18,15 @@ export function SolutionShowcase() {
   const [presenca, automacao, aquisicao, conteudo] = servicos;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr] lg:items-stretch">
+    <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr] lg:items-start">
       {/* Card grande — Presença Digital */}
-      <SectionReveal anim="fade-up" className="h-full">
-        <SpotlightCard className="flex h-full flex-col overflow-hidden p-7 sm:p-9">
+      <SectionReveal anim="fade-up">
+        <SpotlightCard className="flex flex-col overflow-hidden p-7 sm:p-9">
           <span className="t-label text-[var(--color-cyan)]">{presenca.tag}</span>
           <h3 className="t-h3 mt-3">{presenca.titulo}</h3>
           <p className="mt-3 max-w-md text-sm text-[var(--color-text-muted)]">{presenca.problema}</p>
           <p className="mt-3 max-w-md text-sm text-[var(--color-text)]">{presenca.solucao}</p>
-          <div className="mt-8 grow px-2 sm:px-6">
+          <div className="mt-8 px-2 sm:px-6">
             <BrowserPreview />
           </div>
           <div className="mt-10">
@@ -87,15 +87,17 @@ export function SolutionShowcase() {
             <span className="t-label text-[var(--color-green)]">{conteudo.tag}</span>
             <h4 className="t-h3 mt-2 text-[1.15rem]">{conteudo.titulo}</h4>
             <p className="mt-2 text-sm text-[var(--color-text-muted)]">{conteudo.beneficio}</p>
-            <div className="mt-5 flex gap-2" aria-hidden>
+            <div className="mt-5 grid grid-cols-4 gap-2.5" aria-hidden>
               {[0, 1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="aspect-[4/5] flex-1 rounded-md border border-[var(--hairline)] bg-[var(--color-surface-3)]"
-                  style={{ opacity: 1 - i * 0.16 }}
+                  className="flex min-h-[4.5rem] flex-col gap-1.5 rounded-md border border-[var(--hairline)] bg-[var(--color-surface-3)] p-2.5"
+                  style={{ opacity: 1 - i * 0.12 }}
                 >
-                  <div className="m-2 h-1.5 w-2/3 rounded bg-[var(--color-cyan)]/50" />
-                  <div className="mx-2 h-1 w-4/5 rounded bg-[var(--color-text-dim)]/40" />
+                  <div className="h-1.5 w-3/4 rounded-full bg-[var(--color-cyan)]/55" />
+                  <div className="h-1 w-full rounded-full bg-[var(--color-text-dim)]/35" />
+                  <div className="h-1 w-5/6 rounded-full bg-[var(--color-text-dim)]/35" />
+                  <div className="mt-auto h-1.5 w-1/2 rounded-full bg-[var(--color-green)]/45" />
                 </div>
               ))}
             </div>

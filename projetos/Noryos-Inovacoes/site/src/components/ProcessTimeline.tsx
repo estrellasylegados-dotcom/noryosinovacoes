@@ -13,7 +13,9 @@ import { processo } from "@/content/home";
 export function ProcessTimeline() {
   const [ref, progress] = useScrollProgress<HTMLDivElement>();
   const [inViewRef, inView] = useInView<HTMLDivElement>();
-  const fill = Math.min(1, Math.max(0, (progress - 0.2) / 0.55));
+  // Mesma calibração do fluxo do sistema: a linha completa enquanto a seção
+  // ainda está bem visível, não só quando já está saindo por cima.
+  const fill = Math.min(1, Math.max(0, (progress - 0.12) / 0.4));
   const activeIndex = Math.min(processo.length - 1, Math.floor(fill * processo.length + 0.0001));
 
   const setRefs = (el: HTMLDivElement | null) => {

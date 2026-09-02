@@ -87,4 +87,5 @@ export const porQueNoryos: { titulo: string; descricao: string }[] = [
   { titulo: "Integração", descricao: "Presença, aquisição, automação e conteúdo puxando pro mesmo lado, não em silos." },
   { titulo: "Visibilidade", descricao: "Você entende o que foi construído e por quê. Sem caixa-preta." },
   { titulo: "Evolução", descricao: "O que é entregue já é pensado pra crescer, com o próximo passo priorizado." },
+  { titulo: "Transparência", descricao: "Clareza sobre o que já está pronto e o que ainda está em construção — sem case inventado pra parecer maior." },
 ];

@@ -22,7 +22,10 @@ export function MiniChart() {
             className="flex-1 rounded-t-[3px]"
             style={
               {
-                height: inView ? `${h}%` : "6%",
+                // repouso em ~45% do valor final (não uma linha rasa): mesmo sem
+                // a animação disparar — scroll rápido, JS atrasado — já lê como
+                // gráfico, não como algo quebrado.
+                height: inView ? `${h}%` : `${Math.round(h * 0.45)}%`,
                 background:
                   i === bars.length - 1
                     ? "linear-gradient(180deg, var(--color-green), color-mix(in oklab, var(--color-green) 40%, transparent))"

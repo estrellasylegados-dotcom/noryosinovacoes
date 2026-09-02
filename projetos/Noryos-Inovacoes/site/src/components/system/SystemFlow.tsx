@@ -13,9 +13,14 @@ import { fluxoSistema } from "@/content/home";
 export function SystemFlow() {
   const [ref, progress] = useScrollProgress<HTMLDivElement>();
   const [inViewRef, inView] = useInView<HTMLDivElement>();
-  // mapeia 0.15..0.85 do progresso pra 0..1 do preenchimento
-  const fill = Math.min(1, Math.max(0, (progress - 0.15) / 0.6));
-  const activeIndex = Math.min(fluxoSistema.length - 1, Math.floor(fill * fluxoSistema.length));
+  // A linha precisa completar enquanto a seção ainda está confortavelmente na
+  // tela — não só quando ela já está saindo por cima. Mapeia progress 0,12..0,52
+  // pra 0..1 (antes era 0,15..0,75, e os passos Dados/Evolução nunca acendiam).
+  const fill = Math.min(1, Math.max(0, (progress - 0.12) / 0.4));
+  const activeIndex = Math.min(
+    fluxoSistema.length - 1,
+    Math.floor(fill * fluxoSistema.length + 0.0001)
+  );
 
   const setRefs = (el: HTMLDivElement | null) => {
     ref.current = el;
@@ -43,7 +48,7 @@ export function SystemFlow() {
               <div
                 key={step.nome}
                 data-anim="fade-up"
-                className={`relative flex flex-col items-center text-center ${inView ? "is-in" : ""}`}
+                className={`relative flex min-w-0 flex-col items-center text-center ${inView ? "is-in" : ""}`}
                 style={{ "--anim-delay": `${i * 80}ms` } as CSSProperties}
               >
                 <span
@@ -59,8 +64,10 @@ export function SystemFlow() {
                 <span className="mt-3 text-xs font-mono uppercase tracking-widest text-[var(--color-text-dim)]">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span className="mt-1 text-sm font-semibold tracking-tight">{step.nome}</span>
-                <span className="mt-1 text-xs text-[var(--color-text-muted)]">{step.nota}</span>
+                <span className="mt-1 w-full text-sm font-semibold leading-tight tracking-tight [hyphens:auto] [overflow-wrap:anywhere]">
+                  {step.nome}
+                </span>
+                <span className="mt-1 w-full text-xs text-[var(--color-text-muted)]">{step.nota}</span>
               </div>
             );
           })}
