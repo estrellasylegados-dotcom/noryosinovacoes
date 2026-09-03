@@ -26,7 +26,7 @@
 
 ## CTA e conversão
 
-- CTA principal: "Conversar sobre meu projeto" → WhatsApp, centralizado em `site/src/lib/config.ts` (`NEXT_PUBLIC_WHATSAPP_NUMBER`). Número definido (01/09/2026): `5561999256901` — `(61) 99925-6901`. Aplicado no `.env.local` e validado no build local (`wa.me/5561999256901` renderiza). Falta setar a env var na produção da Hostinger + redeploy (`NEXT_PUBLIC_` é build-time); até lá, produção segue no fallback de e-mail.
+- CTA principal: "Conversar sobre meu projeto" → WhatsApp, centralizado em `site/src/lib/config.ts` (`NEXT_PUBLIC_WHATSAPP_NUMBER`). Número: `5561999256901` — `(61) 99925-6901`. **Ativo em produção desde 03/09/2026** (commit `f944cdd`) — env var setada na Hostinger, CTAs servem `wa.me/5561999256901` (confirmado na URL limpa). O `config.ts` também expõe `whatsappDisplay` = `"(61) 99925-6901"` (texto visível) e `whatsappMessages` — presets de mensagem pré-preenchida por origem: `geral` / `site` / `trafego` / `automacao` / `presenca`. `/solucoes` e as 3 páginas internas usam o preset da porta; home, header, botão flutuante e `/contato` usam `geral`. Rodapé (global) exibe "WhatsApp: (61) 99925-6901" clicável; `/contato` exibe "Atendimento comercial: (61) 99925-6901".
 - CTAs secundários: "Conhecer as soluções", "Solicitar diagnóstico".
 - Evitar CTA genérico ("saiba mais", "clique aqui", "entre em contato") — não usados no site.
 
@@ -95,7 +95,7 @@ Léxico é V1 e vai errar em texto ambíguo — por isso os pesos e as listas de
 
 ## Pendências reais (não bloqueiam a entrega, mas precisam de ação humana)
 
-- Número de WhatsApp comercial: **definido** (01/09/2026) — `5561999256901` / `(61) 99925-6901`, já no `.env.local`. Falta setar a env var `NEXT_PUBLIC_WHATSAPP_NUMBER` na produção da Hostinger + redeploy (é build-time)
+- Número de WhatsApp comercial (`5561999256901` / `(61) 99925-6901`): **RESOLVIDO e ATIVO EM PRODUÇÃO em 03/09/2026** (commit `f944cdd`) — env `NEXT_PUBLIC_WHATSAPP_NUMBER` setada na Hostinger; CTAs de produção servem `wa.me/5561999256901` com mensagem contextual por origem (ver "CTA e conversão"). Não é mais pendência.
 - Diagnóstico Digital (Supabase + Resend + Turnstile + scoring V1): **RESOLVIDO e VALIDADO EM PRODUÇÃO em 02/09/2026** (commit `219c35c`). O 503 de persistência foi corrigido; `POST /api/diagnostico` grava a linha completa (incl. `score` / `maturidade_digital` / `classificacao` / `prioridade` / `scoring_version` / `resultado`), o e-mail interno chega pelo Resend com o resumo comercial, e o Turnstile bloqueia (403) request sem token. Migração aditiva das colunas de scoring já aplicada no Supabase de produção. Não é mais pendência.
 - **Formulário V2 do Diagnóstico (respostas estruturadas):** **VALIDADO EM PRODUÇÃO em 03/09/2026** (commit `376a8c6`). Migração aditiva (`form_version` / `respostas` jsonb / `prazo` / `objetivo_principal` / `porte` + 3 índices) aplicada no Supabase de produção; deploy + purge de CDN feitos; envio real conferido; scoring V1 preservado (`scoring_version='v1'`). Não é mais pendência.
 - IDs de GA4 / GTM / Meta Pixel — a camada já está pronta (`<Analytics/>` no layout + `track()` + funil do Diagnóstico instrumentado). Falta só setar `NEXT_PUBLIC_GTM_ID` (ou `NEXT_PUBLIC_GA4_ID`) na env de produção da Hostinger + redeploy; até lá os eventos ficam só no `window.dataLayer` (sem envio externo)
