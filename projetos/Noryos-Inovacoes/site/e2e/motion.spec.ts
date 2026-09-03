@@ -27,12 +27,20 @@ test.describe("Motion — conteúdo visível e sem erro de JS", () => {
     await page.goto("/");
     await scrollThroughPage(page);
 
+    // trazer o alvo pra viewport e esperar o reveal ([data-anim]) assentar
+    // antes de clicar — senão, sob carga, o clique disputa com a transição
+    // ("element is not stable").
     const faqBtn = page.getByRole("button", { name: /Preciso contratar todas as soluções/i });
+    await faqBtn.scrollIntoViewIfNeeded();
+    await expect(faqBtn).toBeVisible();
     await faqBtn.click();
     await expect(faqBtn).toHaveAttribute("aria-expanded", "true");
 
-    const os = page.locator("#noryos-os");
-    await os.getByRole("button", { name: "Automações" }).click();
-    await expect(os.getByRole("heading", { name: "Automações" })).toBeVisible();
+    const dk = page.locator("#noryos-os .osx-desktop");
+    await dk.scrollIntoViewIfNeeded();
+    const autoTab = dk.getByRole("tab", { name: /Automações/ });
+    await expect(autoTab).toBeVisible();
+    await autoTab.click();
+    await expect(dk.getByRole("heading", { name: "Automações" })).toBeVisible();
   });
 });

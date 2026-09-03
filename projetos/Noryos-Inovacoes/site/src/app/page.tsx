@@ -7,8 +7,7 @@ import { SectionReveal, Stagger, Parallax } from "@/components/ui/motion";
 import { AnimatedHeading } from "@/components/ui/AnimatedHeading";
 import { staggerIndex } from "@/lib/motion";
 import { SystemCanvas } from "@/components/system/SystemCanvas";
-import { FragmentGrid } from "@/components/system/FragmentGrid";
-import { SystemFlow } from "@/components/system/SystemFlow";
+import { OperationShift } from "@/components/system/OperationShift";
 import { SolutionShowcase } from "@/components/SolutionShowcase";
 import { NoryosOSExplorer } from "@/components/NoryosOSExplorer";
 import { DiagnosticPreview } from "@/components/DiagnosticPreview";
@@ -77,8 +76,8 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* 2 — FRAGMENTAÇÃO */}
-      <section className="section">
+      {/* 2 + 3 — FRAGMENTADO → CONECTADO (uma narrativa só) */}
+      <section className="pt-[clamp(72px,8vw,112px)]">
         <Container>
           <SectionReveal className="max-w-2xl">
             <SectionLabel>O ponto de partida</SectionLabel>
@@ -86,38 +85,29 @@ export default function HomePage() {
               className="t-h2"
               lines={["Operação digital fragmentada", "custa mais caro do que parece."]}
             />
-          </SectionReveal>
-
-          <div className="mt-14">
-            <FragmentGrid />
-          </div>
-
-          <SectionReveal className="mt-12 max-w-xl" delay={60}>
-            <p className="text-[var(--color-text)]">
-              Quando cada parte trabalha isoladamente, crescer exige mais esforço — e sobra menos controle.
+            <p className="mt-5 max-w-xl text-[var(--color-text-muted)]">
+              Cada parte trabalha isolada — site de um lado, anúncio de outro, atendimento sem registro. Crescer
+              exige mais esforço e sobra menos controle.
             </p>
-            <p className="mt-3 t-lead">A Noryos conecta essas partes.</p>
           </SectionReveal>
         </Container>
-      </section>
 
-      {/* 3 — OPERAÇÃO COMO SISTEMA */}
-      <section className="section surface-1 border-y border-[var(--hairline)]">
+        <div className="my-[clamp(48px,6vw,80px)]">
+          <OperationShift />
+        </div>
+
         <Container>
-          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-16">
-            <SectionReveal>
-              <SectionLabel>Uma forma diferente de olhar pra isso</SectionLabel>
-              <AnimatedHeading className="t-h2" lines={["A operação digital pode", "funcionar como sistema."]} />
-              <p className="mt-5 max-w-md t-lead">
-                Em vez de contratar peças soltas — um site aqui, um anúncio ali — a Noryos estrutura presença,
-                aquisição e automação como partes conectadas de uma mesma operação, com dado real orientando cada
-                ajuste.
-              </p>
-            </SectionReveal>
-            <SectionReveal delay={100}>
-              <SystemFlow />
-            </SectionReveal>
-          </div>
+          <SectionReveal className="max-w-2xl" delay={60}>
+            <SectionLabel>Do fragmentado ao sistema</SectionLabel>
+            <AnimatedHeading
+              className="t-h2"
+              lines={["A Noryos conecta as partes —", "e a operação vira sistema."]}
+            />
+            <p className="mt-5 max-w-md t-lead">
+              Presença, aquisição e automação numa mesma operação, com o Noryos OS orquestrando e dado real
+              orientando cada ajuste.
+            </p>
+          </SectionReveal>
         </Container>
       </section>
 

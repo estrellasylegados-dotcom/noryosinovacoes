@@ -1,138 +1,162 @@
 "use client";
 
-import { CSSProperties, useState } from "react";
+import { CSSProperties, KeyboardEvent, useRef, useState } from "react";
 import { useInView } from "@/lib/hooks";
 import { Icon } from "@/components/ui/Icon";
-import { noryosOSFolders } from "@/content/noryos-os";
+import { noryosOSModules as MODS } from "@/content/noryos-os";
 
 /**
- * §16/§17 — o Noryos OS apresentado como um software proprietário, não um
- * accordion e não o Explorer do Windows. Janela com chrome, árvore de
- * categorias que abre/fecha, e um painel contextual que reage à seleção.
- * Só a abstração comercial do método — nunca a estrutura real interna.
+ * §16/§17 — o Noryos OS como um workspace operacional: não pastas girando,
+ * não o Explorer do Windows. Uma janela com as frentes de trabalho em
+ * módulos; ao selecionar um, ele assume foco, "abre" e mostra 2–4 itens
+ * internos, os outros recuam. Um indicador desliza; tudo pertence ao mesmo
+ * sistema. Só a abstração comercial do método — nunca a estrutura real.
+ *
+ * Desktop: tablist (indicador desliza, conteúdo entra com stagger curto).
+ * Mobile: accordion (targets grandes, sem hover). reduced-motion: troca
+ * seca. Nenhum translate horizontal (o overflow antigo de ~4px sai daqui).
  */
-/** Indicador de estado do painel (§12) — ciano/verde, uso moderado. */
-const STATUS = ["Organizado", "Conectado", "Documentado"] as const;
 
 export function NoryosOSExplorer() {
   const [ref, inView] = useInView<HTMLDivElement>();
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const [selected, setSelected] = useState(0);
-  const active = noryosOSFolders[selected];
+  const [sel, setSel] = useState(0);
+  const tablistRef = useRef<HTMLDivElement>(null);
+  const idx = sel < 0 ? 0 : sel;
+  const active = MODS[idx];
+
+  const onTabsKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const keys = ["ArrowRight", "ArrowLeft", "Home", "End"];
+    if (!keys.includes(e.key)) return;
+    e.preventDefault();
+    let next = idx;
+    if (e.key === "ArrowRight") next = (idx + 1) % MODS.length;
+    if (e.key === "ArrowLeft") next = (idx - 1 + MODS.length) % MODS.length;
+    if (e.key === "Home") next = 0;
+    if (e.key === "End") next = MODS.length - 1;
+    setSel(next);
+    tablistRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+  };
 
   return (
     <div
       ref={ref}
       data-anim="scale-in"
-      className={`panel overflow-hidden ${inView ? "is-in" : ""}`}
+      className={`osx panel overflow-hidden ${inView ? "is-in" : ""}`}
     >
-      {/* chrome */}
-      <div className="flex items-center gap-3 border-b border-[var(--hairline)] bg-[var(--color-surface-1)] px-4 py-2.5">
-        <div className="flex gap-1.5" aria-hidden>
-          <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-text-dim)]/50" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-text-dim)]/50" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-text-dim)]/50" />
-        </div>
-        <span className="font-mono text-xs tracking-[0.2em] text-[var(--color-text-muted)]">NORYOS OS</span>
-        <span className="ml-auto flex items-center gap-2 font-mono text-[10px] text-[var(--color-text-dim)]">
-          <span className="live-dot h-1.5 w-1.5 rounded-full bg-[var(--color-green)]" aria-hidden />
-          <span className="hidden sm:inline">ativo</span>
+      <div className="osx-chrome">
+        <span className="osx-dots" aria-hidden>
+          <i />
+          <i />
+          <i />
+        </span>
+        <span className="osx-title">NORYOS OS</span>
+        <span className="osx-state" aria-hidden>
+          <i className="live-dot" />
+          <span>operando</span>
         </span>
       </div>
 
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-        {/* árvore */}
-        <div className="border-b border-[var(--hairline)] p-2 lg:border-b-0 lg:border-r">
-          <ul className="grid gap-0.5">
-            {noryosOSFolders.map((folder, index) => {
-              const isOpen = openIndex === index;
-              const isSel = selected === index;
-              return (
-                <li
-                  key={folder.nome}
-                  data-anim="fade-left"
-                  data-selected={isSel}
-                  className={`tree-item ${inView ? "is-in" : ""}`}
-                  style={{ "--anim-delay": `${index * 55}ms` } as CSSProperties}
-                >
-                  <button
-                    type="button"
-                    className={`flex w-full items-center gap-2.5 rounded-[var(--radius-sm)] px-3 py-2.5 text-left transition-colors duration-200 ${
-                      isSel
-                        ? "bg-[var(--color-surface-3)] text-[var(--color-text)]"
-                        : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]"
-                    }`}
-                    aria-expanded={isOpen}
-                    onClick={() => {
-                      setSelected(index);
-                      setOpenIndex(isOpen ? null : index);
-                    }}
-                  >
-                    <Icon
-                      name="chevron"
-                      size={14}
-                      className="shrink-0 text-[var(--color-text-dim)] transition-transform duration-200"
-                      style={{ transform: isOpen ? "rotate(90deg)" : "none" }}
-                    />
-                    <Icon
-                      name={isOpen ? "folder-open" : "folder"}
-                      size={16}
-                      className={`shrink-0 ${isSel ? "text-[var(--color-cyan)]" : ""}`}
-                    />
-                    <span className="text-sm font-medium tracking-tight">{folder.nome}</span>
-                  </button>
+      {/* desktop: tabs + painel */}
+      <div className="osx-desktop hidden md:block" style={{ "--sel": idx } as CSSProperties}>
+        <div
+          ref={tablistRef}
+          role="tablist"
+          aria-label="Frentes do Noryos OS"
+          className="osx-tabs"
+          onKeyDown={onTabsKey}
+        >
+          {MODS.map((m, i) => (
+            <button
+              key={m.nome}
+              type="button"
+              role="tab"
+              id={`osx-tab-${i}`}
+              aria-selected={idx === i}
+              aria-controls="osx-panel"
+              tabIndex={idx === i ? 0 : -1}
+              className="osx-tab"
+              onClick={() => setSel(i)}
+            >
+              <Icon name={m.icon} size={16} aria-hidden />
+              <span>{m.nome}</span>
+            </button>
+          ))}
+          <span className="osx-rail" aria-hidden>
+            <span className="osx-rail-node" />
+          </span>
+        </div>
 
-                  <div
-                    className="grid transition-[grid-template-rows] duration-300 ease-out"
-                    style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
-                  >
-                    <div className="overflow-hidden">
-                      <ul className="ml-[26px] grid gap-1.5 border-l border-[var(--hairline)] py-2 pl-4">
-                        {folder.itens.map((item) => (
-                          <li key={item} className="flex items-center gap-2 text-[13px] text-[var(--color-text-muted)]">
-                            <span className="h-1 w-1 shrink-0 rounded-full bg-[var(--color-cyan)]" aria-hidden />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
+        <div
+          role="tabpanel"
+          id="osx-panel"
+          aria-labelledby={`osx-tab-${idx}`}
+          tabIndex={0}
+          key={idx}
+          className="osx-panel"
+        >
+          <div className="osx-panel-head">
+            <h3 className="osx-name">{active.nome}</h3>
+            <span className="osx-tag" aria-hidden>
+              frente {idx + 1}/{MODS.length}
+            </span>
+          </div>
+          <p className="osx-desc">{active.descricao}</p>
+          <ul className="osx-items">
+            {active.itens.map((it, i) => (
+              <li key={it} className="osx-item" style={{ "--i": i } as CSSProperties}>
+                {it}
+              </li>
+            ))}
           </ul>
         </div>
-
-        {/* painel contextual — troca com fade + slide a cada seleção */}
-        <div className="p-6">
-          <div className="flex items-center justify-between gap-3">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-dim)]">
-              Categoria selecionada
-            </span>
-            <span className="flex items-center gap-1.5 font-mono text-[10px] text-[var(--color-text-dim)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-green)]" aria-hidden />
-              {STATUS[selected % STATUS.length]}
-            </span>
-          </div>
-          <div key={selected} className="panel-swap">
-            <h3 className="t-h3 mt-2 text-[1.15rem] text-[var(--color-text)]">{active.nome}</h3>
-            <p className="mt-2 text-sm text-[var(--color-text-muted)]">{active.descricao}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {active.itens.map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full border border-[var(--hairline-strong)] bg-[var(--color-surface-2)] px-2.5 py-1 text-xs text-[var(--color-text-muted)]"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-          <p className="mt-6 border-t border-[var(--hairline)] pt-4 font-mono text-[11px] text-[var(--color-text-dim)]">
-            organizado no Noryos OS do seu projeto
-          </p>
-        </div>
       </div>
+
+      {/* mobile: accordion — usa `sel` cru (não o `idx` fixado em 0 do
+          desktop), pra permitir recolher todas as frentes */}
+      <div className="osx-mobile md:hidden">
+        {MODS.map((m, i) => {
+          const open = sel === i;
+          return (
+            <div key={m.nome} className="osx-acc" data-open={open || undefined}>
+              <h3 className="osx-acc-h">
+                <button
+                  type="button"
+                  className="osx-acc-head"
+                  id={`osx-acc-head-${i}`}
+                  aria-expanded={open}
+                  aria-controls={`osx-acc-panel-${i}`}
+                  onClick={() => setSel(open ? -1 : i)}
+                >
+                  <Icon name={m.icon} size={17} className="osx-acc-icon" aria-hidden />
+                  <span className="osx-acc-name">{m.nome}</span>
+                  <Icon name="chevron" size={14} className="osx-acc-chev" aria-hidden />
+                </button>
+              </h3>
+              <div
+                className="osx-acc-wrap"
+                id={`osx-acc-panel-${i}`}
+                role="region"
+                aria-labelledby={`osx-acc-head-${i}`}
+              >
+                <div className="osx-acc-inner">
+                  <div className="osx-acc-pad">
+                    <p className="osx-desc">{m.descricao}</p>
+                    <ul className="osx-items">
+                      {m.itens.map((it, k) => (
+                        <li key={it} className="osx-item" style={{ "--i": k } as CSSProperties}>
+                          {it}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="osx-foot">Tudo registrado e conectado no mesmo Noryos OS — um por projeto.</p>
     </div>
   );
 }

@@ -3,9 +3,10 @@ import { WhatsappCTA } from "@/components/WhatsappCTA";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { SectionReveal, Stagger } from "@/components/ui/motion";
 import { staggerIndex } from "@/lib/motion";
-import { BrowserPreview } from "@/components/system/BrowserPreview";
-import { AutomationFlow } from "@/components/system/AutomationFlow";
-import { MiniChart } from "@/components/system/MiniChart";
+import { PresenceJourney } from "@/components/system/PresenceJourney";
+import { AutomationConveyor } from "@/components/system/AutomationConveyor";
+import { PerformancePanel } from "@/components/system/PerformancePanel";
+import { ChannelHub } from "@/components/system/ChannelHub";
 import { servicos } from "@/content/servicos";
 
 /**
@@ -26,8 +27,8 @@ export function SolutionShowcase() {
           <h3 className="t-h3 mt-3">{presenca.titulo}</h3>
           <p className="mt-3 max-w-md text-sm text-[var(--color-text-muted)]">{presenca.problema}</p>
           <p className="mt-3 max-w-md text-sm text-[var(--color-text)]">{presenca.solucao}</p>
-          <div className="mt-8 px-2 sm:px-6">
-            <BrowserPreview />
+          <div className="mt-8">
+            <PresenceJourney />
           </div>
           <div className="mt-10">
             {presenca.href && (
@@ -41,22 +42,20 @@ export function SolutionShowcase() {
 
       {/* Coluna direita — três cards variados */}
       <Stagger className="grid gap-4">
-        {/* Automação — mini fluxo */}
+        {/* Automação — esteira operacional viva */}
         <div data-anim="fade-up" style={staggerIndex(0)}>
-          <SpotlightCard className="grid gap-5 p-7 sm:grid-cols-[1fr_auto] sm:items-center">
-            <div>
-              <span className="t-label text-[var(--color-green)]">{automacao.tag}</span>
-              <h4 className="t-h3 mt-2 text-[1.15rem]">{automacao.titulo}</h4>
-              <p className="mt-2 text-sm text-[var(--color-text-muted)]">{automacao.beneficio}</p>
-              {automacao.href && (
-                <ButtonLink href={automacao.href} variant="ghost" className="mt-3 !px-0 !py-0" withArrow>
-                  Ver solução
-                </ButtonLink>
-              )}
+          <SpotlightCard className="p-7">
+            <span className="t-label text-[var(--color-green)]">{automacao.tag}</span>
+            <h4 className="t-h3 mt-2 text-[1.15rem]">{automacao.titulo}</h4>
+            <p className="mt-2 text-sm text-[var(--color-text-muted)]">{automacao.beneficio}</p>
+            <div className="mt-6">
+              <AutomationConveyor />
             </div>
-            <div className="min-w-[150px]">
-              <AutomationFlow />
-            </div>
+            {automacao.href && (
+              <ButtonLink href={automacao.href} variant="ghost" className="mt-4 !px-0 !py-0" withArrow>
+                Ver solução
+              </ButtonLink>
+            )}
           </SpotlightCard>
         </div>
 
@@ -71,7 +70,7 @@ export function SolutionShowcase() {
             </div>
             <p className="mt-2 text-sm text-[var(--color-text-muted)]">{aquisicao.beneficio}</p>
             <div className="mt-5">
-              <MiniChart />
+              <PerformancePanel />
             </div>
             {aquisicao.href && (
               <ButtonLink href={aquisicao.href} variant="ghost" className="mt-4 !px-0 !py-0" withArrow>
@@ -87,19 +86,8 @@ export function SolutionShowcase() {
             <span className="t-label text-[var(--color-green)]">{conteudo.tag}</span>
             <h4 className="t-h3 mt-2 text-[1.15rem]">{conteudo.titulo}</h4>
             <p className="mt-2 text-sm text-[var(--color-text-muted)]">{conteudo.beneficio}</p>
-            <div className="mt-5 grid grid-cols-4 gap-2.5" aria-hidden>
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="flex min-h-[4.5rem] flex-col gap-1.5 rounded-md border border-[var(--hairline)] bg-[var(--color-surface-3)] p-2.5"
-                  style={{ opacity: 1 - i * 0.12 }}
-                >
-                  <div className="h-1.5 w-3/4 rounded-full bg-[var(--color-cyan)]/55" />
-                  <div className="h-1 w-full rounded-full bg-[var(--color-text-dim)]/35" />
-                  <div className="h-1 w-5/6 rounded-full bg-[var(--color-text-dim)]/35" />
-                  <div className="mt-auto h-1.5 w-1/2 rounded-full bg-[var(--color-green)]/45" />
-                </div>
-              ))}
+            <div className="mt-5">
+              <ChannelHub />
             </div>
             <WhatsappCTA variant="ghost" className="mt-4 !px-0 !py-0">
               Perguntar sobre conteúdo
