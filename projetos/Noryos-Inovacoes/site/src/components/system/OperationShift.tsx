@@ -213,7 +213,7 @@ function OperationCanvas({ t, reduced }: { t: number; reduced: boolean }) {
         <span className="os-phase" data-phase={d.phase}>
           {PHASE_WORD[d.phase]}
         </span>
-        <IllustrativeCaption>Ilustração conceitual</IllustrativeCaption>
+        <IllustrativeCaption>Representação ilustrativa</IllustrativeCaption>
       </div>
     </>
   );
@@ -292,7 +292,7 @@ function OperationMobile({ mt, reduced }: { mt: number; reduced: boolean }) {
         <span className="os-phase" data-phase={phase}>
           {PHASE_WORD[phase]}
         </span>
-        <IllustrativeCaption>Ilustração conceitual</IllustrativeCaption>
+        <IllustrativeCaption>Representação ilustrativa</IllustrativeCaption>
       </div>
     </div>
   );
@@ -305,11 +305,12 @@ export function OperationShift() {
   const [deskRef, deskProgress] = useScrollProgress<HTMLDivElement>();
   const [mobRef, mobProgress] = useScrollProgress<HTMLDivElement>();
 
-  // `deskProgress` cobre toda a zona de 135vh; a janela em que o canvas fica
-  // "colado" (sticky) é progress ~[0.38, 0.64]. Mapeia o miolo dela pra
-  // t 0..1, deixando folga no início (segura o fragmentado colado) e no fim
-  // (segura o conectado com os pulsos rodando) antes de descolar.
-  const t = reduced ? 1 : clamp01((deskProgress - 0.4) / 0.19);
+  // `deskProgress` cobre toda a zona de 100vh; a janela em que o canvas fica
+  // "colado" (sticky, top 8vh / min-height 62vh) é progress ~[0.46, 0.66].
+  // Mapeia o miolo dela pra t 0..1, deixando folga no início (segura o
+  // fragmentado colado) e no fim (segura o conectado com os pulsos rodando)
+  // antes de descolar.
+  const t = reduced ? 1 : clamp01((deskProgress - 0.44) / 0.18);
 
   return (
     <div className="os-shift">

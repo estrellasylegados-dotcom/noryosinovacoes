@@ -560,11 +560,20 @@ main {
   transition: opacity var(--dur-2) var(--ease-premium);
 }
 
-/* orientação horizontal (md+) */
+/* orientação horizontal (md+) — nós maiores e mais respiro vertical: no
+   card de Automação a esteira precisa ter presença, não parecer 4 ícones
+   soltos numa linha. */
+.cv--h {
+  padding-top: 0.75rem;
+}
+.cv--h .cv-node-icon {
+  height: 3.25rem;
+  width: 3.25rem;
+}
 .cv--h .cv-track {
   left: 12.5%;
   right: 12.5%;
-  top: 21px;
+  top: calc(0.75rem + 26px);
   height: 2px;
 }
 .cv--h .cv-rail-fill {
@@ -601,7 +610,7 @@ main {
   text-align: center;
 }
 .cv--h .cv-node {
-  padding-bottom: 2rem;
+  padding-bottom: 3rem;
 }
 .cv--v .cv-node {
   flex-direction: row;
@@ -775,7 +784,8 @@ main {
    ====================================================================== */
 .pp-legend {
   display: flex;
-  justify-content: flex-end;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 0.9rem;
   padding-right: 2px;
   margin-bottom: 0.4rem;
@@ -784,19 +794,28 @@ main {
   letter-spacing: 0.06em;
   color: var(--color-text-dim);
 }
-.pp-legend span {
+.pp-unit {
+  text-transform: lowercase;
+}
+.pp-legend-keys {
+  display: inline-flex;
+  gap: 0.9rem;
+}
+.pp-legend-keys span {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
 }
 .pp-sw {
   display: inline-block;
-  width: 12px;
+  width: 14px;
   height: 2px;
   border-radius: 2px;
 }
 .pp-sw--inv {
-  background: var(--color-text-dim);
+  height: 0;
+  border-top: 2px dashed var(--color-text-muted);
+  border-radius: 0;
 }
 .pp-sw--ret {
   background: var(--color-cyan);
@@ -808,13 +827,20 @@ main {
 .pp-svg {
   display: block;
   width: 100%;
-  height: 116px;
+  height: 132px;
   overflow: visible;
 }
 
 .pp-axis {
   stroke: var(--hairline-strong);
   stroke-width: 1;
+}
+/* grades horizontais discretas — dão "chão de gráfico" ao espaço acima da
+   linha, sem virar dashboard. */
+.pp-hgrid {
+  stroke: var(--hairline);
+  stroke-width: 1;
+  opacity: 0.5;
 }
 .pp-grid {
   stroke: var(--hairline);
@@ -829,7 +855,7 @@ main {
 /* Sequência da revelação (delays a partir do gatilho): linhas acendem (0) →
    margem preenche L→R (250) → indicadores (450+) → ponto de decisão (850). */
 .pp-area {
-  fill: color-mix(in oklab, var(--color-cyan) 12%, transparent);
+  fill: color-mix(in oklab, var(--color-cyan) 16%, transparent);
   clip-path: inset(0 100% 0 0);
 }
 .pp[data-revealed] .pp-area {
@@ -838,7 +864,6 @@ main {
 }
 .pp-line {
   fill: none;
-  stroke-width: 1.75;
   stroke-linejoin: round;
   stroke-linecap: round;
   opacity: 0.5;
@@ -847,11 +872,16 @@ main {
 .pp[data-revealed] .pp-line {
   opacity: 1;
 }
+/* investimento = referência: cinza claro, tracejada, mais fina — some pra
+   trás e deixa o cruzamento com a linha de retorno (ciano, sólida) legível. */
 .pp-line--inv {
-  stroke: var(--color-text-dim);
+  stroke: var(--color-text-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2.5;
 }
 .pp-line--ret {
   stroke: var(--color-cyan);
+  stroke-width: 2;
 }
 .pp-live {
   fill: var(--color-cyan);
@@ -973,28 +1003,9 @@ main {
   font-size: 0.62em;
   opacity: 0.9;
 }
-
-.pp-spark {
-  display: block;
-  width: 100%;
-  height: 14px;
-  margin-top: 3px;
-  overflow: visible;
-}
-.pp-spark-line {
-  fill: none;
-  stroke: var(--color-text-dim);
-  stroke-width: 1.25;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  transition: stroke-dashoffset var(--dur-3) var(--ease-soft) 550ms;
-}
-.pp-kpi[data-good] .pp-spark-line {
-  stroke: color-mix(in oklab, var(--color-green) 55%, var(--color-text-dim));
-}
-.pp-kpi.is-in .pp-spark-line {
-  stroke-dashoffset: 0;
-}
+/* o traçado da sparkline saiu — KPI é só rótulo + variação direcional, pra
+   não virar dashboard. A entrada suave segue pelo [data-anim="fade"] do
+   motion system (o mesmo --anim-delay escalonado no JSX). */
 
 @media (max-width: 430px) {
   .pp-kpis {
@@ -1002,16 +1013,9 @@ main {
   }
   .pp-kpi {
     flex-direction: row;
-    align-items: center;
+    align-items: baseline;
+    justify-content: space-between;
     gap: 0.6rem;
-  }
-  .pp-kpi-label {
-    flex: 1;
-  }
-  .pp-spark {
-    width: 56px;
-    flex-shrink: 0;
-    margin-top: 0;
   }
 }
 
@@ -1026,15 +1030,15 @@ main {
   border-block: 1px solid var(--hairline);
 }
 .os-scroll:not([data-reduced]) {
-  height: 135vh;
+  height: 100vh;
 }
 .os-scroll[data-reduced] {
   padding-block: clamp(72px, 8vw, 112px);
 }
 .os-sticky {
   position: sticky;
-  top: 7vh;
-  min-height: 84vh;
+  top: 8vh;
+  min-height: 62vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1047,9 +1051,16 @@ main {
 .os-stage {
   position: relative;
   width: 100%;
-  max-width: 820px;
+  max-width: 760px;
   margin-inline: auto;
-  aspect-ratio: 100 / 68;
+  aspect-ratio: 100 / 62;
+  /* respiro de luz atrás do diagrama — mata a sensação de "muito preto" */
+  background: radial-gradient(
+    ellipse 82% 82% at 50% 46%,
+    color-mix(in oklab, var(--color-surface-2) 72%, transparent),
+    color-mix(in oklab, var(--color-surface-2) 22%, transparent) 55%,
+    transparent 80%
+  );
 }
 .os-svg {
   position: absolute;
@@ -1093,18 +1104,32 @@ main {
 .os-node[data-hub] .sys-node-dot {
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-green) 9%, transparent);
 }
+/* contraste no palco: em idle/morph os chips e rótulos precisam se ler
+   sobre o preto (antes sumiam). O estado active/done já é tratado pelo
+   primitivo .sys-node. */
+.os-node .sys-node-dot {
+  background: var(--color-surface-2);
+  color: color-mix(in oklab, var(--color-text) 55%, var(--color-text-dim));
+}
+.os-node .sys-node-label {
+  margin-top: 0.25rem;
+  color: color-mix(in oklab, var(--color-text) 72%, var(--color-text-dim));
+}
 
 .os-svg .sys-conn-base,
 .os-svg .sys-conn-live {
   transition: stroke-dashoffset 120ms linear;
+}
+.os-svg .sys-conn-base {
+  stroke: color-mix(in oklab, var(--color-text-dim) 50%, var(--hairline-strong));
 }
 .os-stage[data-phase="connected"] .sys-conn-live {
   stroke-width: 1.5;
   stroke-opacity: 0.9;
 }
 .os-conn--thin .sys-conn-live {
-  stroke-width: 0.9;
-  stroke-opacity: 0.42;
+  stroke-width: 1;
+  stroke-opacity: 0.55;
   stroke-dasharray: 1.4 1.1;
 }
 
@@ -1292,7 +1317,7 @@ main {
   width: 100%;
   max-width: 540px;
   margin-inline: auto;
-  aspect-ratio: 20 / 11;
+  aspect-ratio: 20 / 8;
 }
 
 .pj-frame {
@@ -1590,14 +1615,12 @@ main {
   transition-delay: 460ms;
 }
 
-/* hub central */
+/* hub central — só o dot fica centrado no ponto; o rótulo pende abaixo,
+   fora do cruzamento das 4 linhas (que saem nas diagonais, nunca reto pra
+   baixo), com um respiro de fundo pra nunca disputar leitura com o traçado. */
 .ch-hub {
   position: absolute;
   z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
   transform: translate(-50%, -50%);
 }
 .ch-hub-dot {
@@ -1637,23 +1660,33 @@ main {
   }
 }
 .ch-hub-label {
-  max-width: 5.5rem;
-  text-align: center;
-  text-wrap: balance;
+  position: absolute;
+  top: calc(100% + 9px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--color-ink);
   line-height: 1.15;
-  font-family: var(--font-mono), monospace;
-  font-size: 0.58rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-text-dim);
-  opacity: 0.6;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--color-text-muted);
+  opacity: 0;
   transition:
-    opacity var(--dur-2) var(--ease-premium),
+    opacity var(--dur-2) var(--ease-premium) 120ms,
     color var(--dur-2) var(--ease-premium);
 }
 .ch[data-revealed] .ch-hub-label {
   opacity: 1;
-  color: var(--color-cyan);
+  color: var(--color-text);
+}
+@media (max-width: 460px) {
+  .ch-hub-label {
+    top: calc(100% + 6px);
+    font-size: 0.62rem;
+  }
 }
 
 /* canais */
@@ -2153,7 +2186,7 @@ main {
   /* Painel de Aquisição (PerformancePanel): o componente já renderiza
      revelado; aqui zeramos os delays da sequência pra tudo aparecer de uma
      vez, estático. */
-  .pp-area, .pp-line, .pp-live, .pp-spark-line { transition-delay: 0ms !important; }
+  .pp-area, .pp-line, .pp-live { transition-delay: 0ms !important; }
   .pp-kpi[data-anim] { transition-delay: 0ms !important; }
   .pp-decision-ring, .pp-decision-tag { animation: none !important; }
 

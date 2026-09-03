@@ -53,19 +53,19 @@ export const fluxoAutomacao: {
 /**
  * §14 (card Aquisição e Performance) — painel de leitura: investimento vs.
  * retorno em índice relativo (base 100) ao longo de 8 semanas, 3 indicadores
- * direcionais com sparkline e um ponto de decisão. ILUSTRATIVO — índice
- * relativo, sem número absoluto e sem dado de cliente. `delta` é variação
- * percentual demonstrativa; `sentido` diz se a variação é positiva pro
- * negócio (verde), independente do sinal.
+ * direcionais e um ponto de decisão. ILUSTRATIVO — índice relativo, sem
+ * número absoluto e sem dado de cliente. `delta` é variação percentual
+ * demonstrativa; `sentido` diz se a variação é positiva pro negócio (verde),
+ * independente do sinal.
  */
 export const aquisicaoPainel = {
   investimento: [100, 103, 107, 110, 114, 117, 121, 124],
   retorno: [94, 100, 110, 119, 132, 145, 158, 174],
   decisao: { semana: 4, rotulo: "ponto de decisão" },
   kpis: [
-    { id: "cpl", label: "Custo / lead", delta: -12, sentido: "bom", spark: [72, 66, 61, 57, 52, 48] },
-    { id: "conv", label: "Conversão", delta: 9, sentido: "bom", spark: [38, 41, 44, 49, 54, 60] },
-    { id: "retorno", label: "Retorno", delta: 23, sentido: "bom", spark: [40, 48, 57, 66, 79, 94] },
+    { id: "cpl", label: "Custo / lead", delta: -12, sentido: "bom" },
+    { id: "conv", label: "Conversão", delta: 9, sentido: "bom" },
+    { id: "retorno", label: "Retorno", delta: 23, sentido: "bom" },
   ],
 } as const;
 
@@ -81,13 +81,13 @@ export const operacaoNos: {
   frag: { x: number; y: number };
   sys: { x: number; y: number };
 }[] = [
-  { id: "os", label: "Noryos OS", icon: "spark", frag: { x: 27, y: 53 }, sys: { x: 50, y: 7 } },
-  { id: "site", label: "Site", icon: "presenca", frag: { x: 14, y: 11 }, sys: { x: 18, y: 25 } },
-  { id: "conteudo", label: "Conteúdo", icon: "conteudo", frag: { x: 12, y: 35 }, sys: { x: 50, y: 23 } },
-  { id: "anuncios", label: "Anúncios", icon: "aquisicao", frag: { x: 87, y: 11 }, sys: { x: 82, y: 25 } },
+  { id: "os", label: "Noryos OS", icon: "spark", frag: { x: 27, y: 53 }, sys: { x: 50, y: 5 } },
+  { id: "site", label: "Site", icon: "presenca", frag: { x: 14, y: 11 }, sys: { x: 18, y: 23 } },
+  { id: "conteudo", label: "Conteúdo", icon: "conteudo", frag: { x: 12, y: 35 }, sys: { x: 50, y: 21 } },
+  { id: "anuncios", label: "Anúncios", icon: "aquisicao", frag: { x: 87, y: 11 }, sys: { x: 82, y: 23 } },
   { id: "leads", label: "Leads", icon: "relacionamento", frag: { x: 49, y: 28 }, sys: { x: 50, y: 39 } },
-  { id: "atend", label: "Atendimento", icon: "automacao", frag: { x: 88, y: 44 }, sys: { x: 50, y: 50 } },
-  { id: "dados", label: "Dados", icon: "dados", frag: { x: 66, y: 54 }, sys: { x: 50, y: 60 } },
+  { id: "atend", label: "Atendimento", icon: "automacao", frag: { x: 88, y: 44 }, sys: { x: 50, y: 52 } },
+  { id: "dados", label: "Dados", icon: "dados", frag: { x: 66, y: 54 }, sys: { x: 50, y: 64 } },
 ];
 
 /**
@@ -203,5 +203,5 @@ export const porQueNoryos: { titulo: string; descricao: string }[] = [
   { titulo: "Integração", descricao: "Presença, aquisição, automação e conteúdo puxando pro mesmo lado, não em silos." },
   { titulo: "Visibilidade", descricao: "Você entende o que foi construído e por quê. Sem caixa-preta." },
   { titulo: "Evolução", descricao: "O que é entregue já é pensado pra crescer, com o próximo passo priorizado." },
-  { titulo: "Transparência", descricao: "Clareza sobre o que já está pronto e o que ainda está em construção — sem case inventado pra parecer maior." },
+  { titulo: "Transparência", descricao: "O que entra no escopo, o prazo real e o que ainda não dá pra garantir — combinado no começo, não descoberto no meio." },
 ];

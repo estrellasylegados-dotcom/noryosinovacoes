@@ -68,7 +68,7 @@ export function DiagnosticPreview() {
           DIAGNÓSTICO DIGITAL
         </span>
         <span className="rounded-full border border-[var(--hairline-strong)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-dim)]">
-          Demonstração ilustrativa
+          Representação ilustrativa
         </span>
       </div>
 

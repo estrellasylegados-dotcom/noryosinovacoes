@@ -71,18 +71,32 @@ export function PerformancePanel() {
       aria-label="Acompanhamento ilustrativo de aquisição: ao longo de 8 semanas a linha de retorno cresce e passa a superar a de investimento; os indicadores de custo por lead, conversão e retorno melhoram. Índice relativo, sem dado de cliente."
     >
       <div className="pp-legend">
-        <span>
-          <i className="pp-sw pp-sw--inv" />
-          investimento
-        </span>
-        <span>
-          <i className="pp-sw pp-sw--ret" />
-          retorno
+        <span className="pp-unit">índice · base 100</span>
+        <span className="pp-legend-keys">
+          <span>
+            <i className="pp-sw pp-sw--inv" />
+            investimento
+          </span>
+          <span>
+            <i className="pp-sw pp-sw--ret" />
+            retorno
+          </span>
         </span>
       </div>
 
       <div className="pp-chart" onPointerMove={onMove} onPointerLeave={() => setHoverWeek(null)}>
         <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} preserveAspectRatio="none" className="pp-svg">
+          {[0.34, 0.67].map((f) => (
+            <line
+              key={f}
+              x1="0"
+              y1={PAD + (VIEW_H - PAD * 2) * f}
+              x2={VIEW_W}
+              y2={PAD + (VIEW_H - PAD * 2) * f}
+              className="pp-hgrid"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
           <line
             x1="0"
             y1={VIEW_H - PAD}
@@ -181,24 +195,12 @@ export function PerformancePanel() {
                 {up ? "+" : "−"}
                 {Math.abs(k.delta)}%
               </span>
-              <svg viewBox="0 0 40 14" preserveAspectRatio="none" className="pp-spark">
-                <polyline
-                  points={k.spark
-                    .map((v, j) => `${(j / (k.spark.length - 1)) * 40},${13 - (v / 100) * 12}`)
-                    .join(" ")}
-                  className="pp-spark-line"
-                  pathLength={1}
-                  vectorEffect="non-scaling-stroke"
-                />
-              </svg>
             </div>
           );
         })}
       </div>
 
-      <IllustrativeCaption>
-        Exemplo de acompanhamento · índice relativo, sem dado de cliente
-      </IllustrativeCaption>
+      <IllustrativeCaption>Representação ilustrativa</IllustrativeCaption>
     </div>
   );
 }

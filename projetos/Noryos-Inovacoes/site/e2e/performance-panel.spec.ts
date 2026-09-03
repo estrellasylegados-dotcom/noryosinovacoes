@@ -22,7 +22,8 @@ test.describe("Aquisição — painel de leitura (desktop 1440)", () => {
     await expect(page.locator(`${PP} .pp-line--inv`)).toHaveCount(1);
     await expect(page.locator(`${PP} .pp-line--ret`)).toHaveCount(1);
     await expect(page.locator(`${PP} .pp-kpi`)).toHaveCount(3);
-    await expect(page.locator(PP)).toContainText("Exemplo de acompanhamento");
+    await expect(page.locator(PP)).toContainText("Representação ilustrativa");
+    await expect(page.locator(PP)).toContainText("índice · base 100");
     await expect(page.locator(PP)).toContainText("Custo / lead");
     await expect(page.locator(PP)).toContainText("Conversão");
     await expect(page.locator(PP)).toContainText("Retorno");

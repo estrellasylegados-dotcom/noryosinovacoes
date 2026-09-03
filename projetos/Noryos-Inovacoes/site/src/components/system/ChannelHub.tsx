@@ -112,7 +112,7 @@ export function ChannelHub() {
         </div>
       </div>
 
-      <IllustrativeCaption>Uma estratégia. Vários pontos de contato.</IllustrativeCaption>
+      <IllustrativeCaption>Representação ilustrativa</IllustrativeCaption>
     </div>
   );
 }

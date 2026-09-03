@@ -96,7 +96,7 @@ export function PresenceJourney() {
         {frame("desktop")}
         {frame("mobile")}
       </div>
-      <IllustrativeCaption>Ilustração — a página conduz o visitante até o contato</IllustrativeCaption>
+      <IllustrativeCaption>Representação ilustrativa</IllustrativeCaption>
     </div>
   );
 }

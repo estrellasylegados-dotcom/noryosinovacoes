@@ -166,7 +166,7 @@ export function AutomationConveyor() {
         ))}
       </div>
 
-      <IllustrativeCaption>Fluxo ilustrativo</IllustrativeCaption>
+      <IllustrativeCaption>Representação ilustrativa</IllustrativeCaption>
     </div>
   );
 }

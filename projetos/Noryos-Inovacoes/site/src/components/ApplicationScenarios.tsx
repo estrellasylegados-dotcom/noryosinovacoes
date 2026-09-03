@@ -6,8 +6,8 @@ import { Icon } from "@/components/ui/Icon";
 import { cenarios } from "@/content/home";
 
 /**
- * §20 — cenários demonstrativos. Cada um é um "Exemplo de aplicação", nunca
- * um case ou resultado. Seletor + cadeia de etapas que entra em sequência.
+ * §20 — cenários demonstrativos. Cada um é uma "Representação ilustrativa",
+ * nunca um case ou resultado. Seletor + cadeia de etapas que entra em sequência.
  */
 export function ApplicationScenarios() {
   const [ref, inView] = useInView<HTMLDivElement>();
@@ -36,7 +36,7 @@ export function ApplicationScenarios() {
 
       <div key={cenario.id} className="panel mt-6 p-6 sm:p-8">
         <span className="rounded-full border border-[var(--hairline-strong)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-dim)]">
-          Exemplo de aplicação
+          Representação ilustrativa
         </span>
         <p className="mt-4 text-sm text-[var(--color-text-muted)]">{cenario.contexto}</p>
 

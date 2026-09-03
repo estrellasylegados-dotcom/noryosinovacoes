@@ -42,7 +42,7 @@ test.describe("Conteúdo e Presença — hub de canais (desktop 1440)", () => {
     await expect(page.locator(`${CH} .ch-ch[data-state="active"]`)).toHaveCount(4);
 
     await expect(ch).toContainText("Mensagem central");
-    await expect(ch).toContainText("Uma estratégia. Vários pontos de contato.");
+    await expect(ch).toContainText("Representação ilustrativa");
     for (const label of ["Site", "Instagram", "Google", "WhatsApp"]) {
       await expect(page.locator(`${CH} .ch-ch-label`, { hasText: new RegExp(`^${label}$`) })).toBeVisible();
     }
