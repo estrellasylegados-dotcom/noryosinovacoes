@@ -4,7 +4,7 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { WhatsappCTA } from "@/components/WhatsappCTA";
 import { ButtonLink } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
-import { siteConfig } from "@/lib/config";
+import { siteConfig, whatsappDisplay } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Contato",
@@ -30,6 +30,9 @@ export default function ContatoPage() {
             </ButtonLink>
           </div>
           <p className="mt-10 text-sm text-[var(--color-text-muted)]">{siteConfig.atendimento}</p>
+          <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-[var(--color-text-dim)]">
+            Atendimento comercial: {whatsappDisplay}
+          </p>
         </Reveal>
       </Container>
     </section>

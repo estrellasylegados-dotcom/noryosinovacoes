@@ -14,9 +14,34 @@ const rawWhatsapp = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
 /** Número em formato E.164 sem símbolos, ex: 5511999999999. Vazio = ainda não definido. */
 export const whatsappNumber = rawWhatsapp.replace(/\D/g, "");
 
-/** Mensagem padrão pré-preenchida no link do WhatsApp. */
-const defaultWhatsappMessage =
-  "Olá! Vim pelo site da Noryos e quero conversar sobre um projeto.";
+/**
+ * Exibição humana do número comercial — usar em texto visível (rodapé,
+ * "atendimento comercial: …"). O link continua vindo de getWhatsappLink().
+ */
+export const whatsappDisplay = "(61) 99925-6901";
+
+/**
+ * Mensagens pré-preenchidas do WhatsApp por origem/intenção (§ página
+ * /solucoes). Ponto único — nenhum componente monta texto de wa.me na mão.
+ * Sem contexto claro numa origem, usar `geral`.
+ */
+export const whatsappMessages = {
+  geral:
+    "Olá! Conheci a Noryos pelo site e gostaria de conversar sobre minha empresa.",
+  site:
+    "Olá! Vi a solução de Sites da Noryos e gostaria de avaliar meu site/presença web.",
+  trafego:
+    "Olá! Vi a solução de Aquisição e Performance e gostaria de conversar sobre tráfego pago para minha empresa.",
+  automacao:
+    "Olá! Gostaria de conversar sobre automação e integrações para o atendimento da minha empresa.",
+  presenca:
+    "Olá! Gostaria de conversar sobre como organizar a presença digital da minha empresa.",
+} as const;
+
+export type WhatsappPreset = keyof typeof whatsappMessages;
+
+/** Mensagem padrão pré-preenchida no link do WhatsApp (origem sem contexto). */
+const defaultWhatsappMessage = whatsappMessages.geral;
 
 /**
  * Gera o link de WhatsApp centralizado. Se o número ainda não estiver

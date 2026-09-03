@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Container } from "./ui/Container";
 import { navegacaoFooter } from "@/content/navegacao";
-import { siteConfig } from "@/lib/config";
+import { siteConfig, getWhatsappLink, whatsappDisplay, analyticsEvents } from "@/lib/config";
 
 export function Footer() {
   return (
@@ -44,6 +44,17 @@ export function Footer() {
             Contato
           </span>
           <p className="mt-4 text-sm">
+            <a
+              href={getWhatsappLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-analytics-event={analyticsEvents.clickWhatsapp}
+              className="text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
+            >
+              WhatsApp: {whatsappDisplay}
+            </a>
+          </p>
+          <p className="mt-2 text-sm">
             <a href={`mailto:${siteConfig.email}`} className="text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]">
               {siteConfig.email}
             </a>

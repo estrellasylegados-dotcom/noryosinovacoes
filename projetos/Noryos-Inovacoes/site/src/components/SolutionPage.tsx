@@ -2,17 +2,22 @@ import { Container } from "./ui/Container";
 import { SectionLabel } from "./ui/SectionLabel";
 import { WhatsappCTA } from "./WhatsappCTA";
 import { ButtonLink } from "./ui/Button";
+import { Icon } from "./ui/Icon";
 import { SectionReveal, Stagger } from "./ui/motion";
 import { SpotlightCard } from "./ui/SpotlightCard";
 import { staggerIndex } from "@/lib/motion";
+import { whatsappMessages } from "@/lib/config";
 import type { SolucaoDetalhe } from "@/content/solucoes-detalhe";
 
 /**
- * Estrutura de marketing direto (seção 42 do briefing) — usada só nas
- * páginas de solução, não na Home. Home vende a Noryos; isto vende a
- * solução específica.
+ * Aprofundamento comercial de uma solução (não é a Home, não é página
+ * técnica). CTA primário sempre WhatsApp com mensagem contextual da
+ * solução; Diagnóstico Digital como secundário. Sem preço, sem promessa
+ * de resultado.
  */
 export function SolutionPage({ data }: { data: SolucaoDetalhe }) {
+  const msg = whatsappMessages[data.whatsapp];
+
   return (
     <>
       <section className="hero-bleed tech-grid glow-cyan relative overflow-hidden border-b border-[var(--hairline)] pb-16 pt-[calc(var(--header-h)+72px)]">
@@ -20,8 +25,11 @@ export function SolutionPage({ data }: { data: SolucaoDetalhe }) {
           <SectionLabel>{data.nome}</SectionLabel>
           <h1 className="t-display max-w-3xl text-[clamp(2.25rem,1.6rem+2.6vw,3.4rem)]">{data.titulo}</h1>
           <p className="mt-6 max-w-2xl t-lead">{data.subtitulo}</p>
-          <div className="mt-8">
-            <WhatsappCTA>Solicitar diagnóstico</WhatsappCTA>
+          <div className="mt-8 flex flex-wrap gap-4">
+            <WhatsappCTA message={msg}>Conversar sobre meu projeto</WhatsappCTA>
+            <ButtonLink href="/diagnostico" variant="secondary" withArrow>
+              Fazer Diagnóstico Digital
+            </ButtonLink>
           </div>
         </Container>
       </section>
@@ -59,9 +67,33 @@ export function SolutionPage({ data }: { data: SolucaoDetalhe }) {
 
       <section className="section">
         <Container>
+          <SectionReveal className="max-w-2xl">
+            <SectionLabel>O que pode entrar no projeto</SectionLabel>
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Conforme o escopo definido na reunião — nem toda empresa precisa de tudo.
+            </p>
+          </SectionReveal>
+          <Stagger className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {data.entregas.map((entrega, i) => (
+              <div
+                key={entrega}
+                data-anim="fade-up"
+                style={staggerIndex(i)}
+                className="flex gap-2.5 rounded-[var(--radius-md)] border border-[var(--hairline)] bg-[var(--color-surface-1)] p-4 text-sm text-[var(--color-text-muted)]"
+              >
+                <Icon name="check" size={15} className="mt-0.5 shrink-0 text-[var(--color-green)]" />
+                {entrega}
+              </div>
+            ))}
+          </Stagger>
+        </Container>
+      </section>
+
+      <section className="section surface-1 border-y border-[var(--hairline)]">
+        <Container>
           <SectionLabel>Cenário demonstrativo</SectionLabel>
           <p className="mb-8 max-w-xl text-sm text-[var(--color-text-muted)]">
-            Hipotético, pra ilustrar o processo — não um case real nem um resultado obtido.
+            Hipotético, para ilustrar o processo — não um case real nem um resultado obtido.
           </p>
           <div className="grid gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--hairline)] sm:grid-cols-4">
             {[
@@ -79,9 +111,9 @@ export function SolutionPage({ data }: { data: SolucaoDetalhe }) {
         </Container>
       </section>
 
-      <section className="section surface-1 border-y border-[var(--hairline)]">
+      <section className="section">
         <Container className="max-w-2xl">
-          <h2 className="t-h3">Objeções comuns</h2>
+          <h2 className="t-h3">Perguntas comuns</h2>
           <div className="mt-6 grid gap-6">
             {data.objecoes.map((item, i) => (
               <SectionReveal key={item.pergunta} delay={i * 50}>
@@ -97,9 +129,9 @@ export function SolutionPage({ data }: { data: SolucaoDetalhe }) {
         <Container className="max-w-xl">
           <h2 className="t-h2">Vamos ver se {data.nome.toLowerCase()} faz sentido pro seu momento?</h2>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <WhatsappCTA>Conversar sobre meu projeto</WhatsappCTA>
+            <WhatsappCTA message={msg}>Conversar sobre meu projeto</WhatsappCTA>
             <ButtonLink href="/diagnostico" variant="secondary" withArrow>
-              Solicitar diagnóstico
+              Fazer Diagnóstico Digital
             </ButtonLink>
           </div>
         </Container>

@@ -19,7 +19,7 @@ test.describe("Header e navegação — desktop", () => {
       .getByRole("link", { name: "Soluções" })
       .click();
     await expect(page).toHaveURL(/\/solucoes$/);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(/Soluções para diferentes etapas/i);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/Estrutura digital/i);
   });
 
   test("o CTA do header aponta pra um destino válido (WhatsApp ou fallback de e-mail)", async ({ page }) => {

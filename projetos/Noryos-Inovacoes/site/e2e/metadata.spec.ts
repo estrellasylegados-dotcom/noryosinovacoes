@@ -26,7 +26,7 @@ test.describe("SEO / metadata / Open Graph / favicon", () => {
 
   test("cada página tem title e description próprios", async ({ page }) => {
     const paginas: Array<[string, RegExp]> = [
-      ["/solucoes", /Soluções para diferentes etapas/i],
+      ["/solucoes", /Soluções digitais para empresas/i],
       ["/sobre", /Sobre a Noryos/i],
       ["/diagnostico", /Diagnóstico Digital Noryos/i],
       ["/contato", /Contato/i],
