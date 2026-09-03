@@ -5,8 +5,10 @@
 ## Sobre
 
 Empresa própria do usuário (domínio registrado: noryosinovacoes.com.br).
-Oferece serviços de marketing digital e automação — nos mesmos moldes do
-que o MazyOS entrega — para pequenas e médias empresas. No futuro, pode
+Empresa de soluções digitais e tecnologia para pequenas e médias empresas
+— presença digital (sites), automação, aquisição e performance (Ads) e
+conteúdo. NUNCA se comunica como "agência de marketing" (ver a seção
+"Específico desse projeto" abaixo e `decisoes-site.md`). No futuro, pode
 nichar em odontologia.
 
 ## Tipo
@@ -14,6 +16,9 @@ nichar em odontologia.
 Iniciativa pessoal — o usuário é o dono e o cliente ao mesmo tempo.
 
 ## Entregas previstas
+
+Hoje o projeto é **só o site institucional** (`site/`) + docs de briefing. As
+frentes abaixo são previstas — ainda sem pasta nem entrega:
 
 - Ads (tráfego pago)
 - Sites
@@ -25,8 +30,10 @@ Iniciativa pessoal — o usuário é o dono e o cliente ao mesmo tempo.
 
 ## Onde salvar o que
 
-- Briefings e contexto: nessa pasta na raiz (`briefing.md`)
-- Entregas: cada subpasta criada (`ads/`, `sites/`, `conteudo/`, `redes-sociais/`, `automacoes/`, `propostas/`)
+- Briefings e contexto: nessa pasta (`briefing.md`, `decisoes-site.md`, `analise-mercado-design.md`)
+- Site institucional: `site/` (app Next.js) · protótipo estático arquivado: `sites/`
+- Identidade do projeto: `identidade/design-guide.md`
+- Nova frente de entrega: criar a subpasta só quando a primeira entrega existir (`ads/`, `conteudo/`, `automacoes/`, `propostas/`…)
 
 ## Contexto que herda da raiz
 

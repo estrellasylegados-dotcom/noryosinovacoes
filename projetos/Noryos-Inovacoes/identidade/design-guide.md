@@ -143,10 +143,10 @@ sinal de competência). Tudo é CSS + SVG + hooks próprios em `src/lib/hooks.ts
 | `scale-in` | opacity + scale .965→1 | janela do Noryos OS, chips do SystemCanvas |
 | `slide-reveal` | clip-path inset(100%→0) por linha | headlines (`AnimatedHeading`) |
 | stagger | filhos entram em sequência via `--i` (passo 70ms, teto 6) | listas, grids, cadeias |
-| `draw-line` | `stroke-dashoffset`→0 | conexões do SystemCanvas / FragmentGrid |
+| `draw-line` | `stroke-dashoffset`→0 | conexões do SystemCanvas / OperationShift / ChannelHub |
 | `fill-bar` | `scaleX` 0→1 | barras do DiagnosticPreview |
 | `flow-line` / `node-pulse` | pulso viajando pela conexão / nó pulsando | SystemCanvas (loop lento, ~3s) |
-| scroll progress | trilho preenche conforme a seção cruza a viewport | SystemFlow, ProcessTimeline |
+| scroll progress | trilho preenche conforme a seção cruza a viewport | OperationShift, PresenceJourney, ProcessTimeline |
 | parallax | `translate3d` por posição do mouse, em camadas | SystemCanvas (off em touch) |
 
 ### Regras
@@ -164,13 +164,13 @@ sinal de competência). Tudo é CSS + SVG + hooks próprios em `src/lib/hooks.ts
 Desenhados pra Noryos, em `src/components/system/` e `src/components/ui/`:
 
 - **SystemCanvas** — o "sistema vivo" do hero: 6 módulos (Presença, Aquisição, Automação=hub, Dados, Conteúdo, Evolução) como chips conectados; linhas que se desenham, pulsos, parallax. Reaproveitado esmaecido no CTA final (começa e termina no mesmo universo).
-- **FragmentGrid** — partes soltas de uma operação que ganham conexões ao entrar na viewport.
-- **SystemFlow** — fluxo Presença→…→Evolução, horizontal (desktop) / vertical (mobile), trilho que preenche no scroll.
-- **NoryosOSExplorer** — janela de "software proprietário" (chrome + árvore de categorias + painel contextual). **Nunca** Windows Explorer literal; **nunca** expõe a estrutura interna real do `noryosinovacoes_OS`.
+- **OperationShift** — §2/§3 fundidas numa narrativa só: 7 nós soltos (conexões quebradas, pulsos que morrem no meio) → deslizam pras posições do sistema, conexões se completam, Noryos OS cresce + halo e assume o centro (orquestrador). Guiado por scroll (`useScrollProgress` + canvas `sticky` no desktop); mobile tem composição vertical própria. Substitui `FragmentGrid` + `SystemFlow`.
+- **NoryosOSExplorer** — janela de "software proprietário" (chrome `NORYOS OS ··· operando` + 7 frentes de trabalho): desktop tablist com indicador que desliza + itens em stagger curto; mobile accordion. Padrão **workspace operacional** (redesign em revisão). **Nunca** Windows Explorer literal; **nunca** expõe a estrutura interna real do `noryosinovacoes_OS`.
 - **DiagnosticPreview** — mock do Diagnóstico Digital com barras que preenchem + selo **"Demonstração ilustrativa"** obrigatório.
 - **ProcessTimeline** — "Como trabalhamos" como timeline que progride no scroll.
 - **ApplicationScenarios** — cenários com seletor; cada um marcado **"Exemplo de aplicação"**.
-- **BrowserPreview / AutomationFlow / MiniChart** — ilustrações abstratas dos cards de solução. Sem texto real, sem número de cliente.
+- **PresenceJourney / AutomationConveyor / PerformancePanel / ChannelHub** — ilustrações demonstrativas dos cards de solução (jornada · esteira viva · painel de leitura · hub multicanal). Sem texto real, sem número de cliente. Substituem `BrowserPreview` / `AutomationFlow` / `MiniChart` + os 4 tiles idênticos do card de Conteúdo.
+- **_primitives.tsx** — vocabulário compartilhado das ilustrações de sistema: `useRevealOnce`, `IllustrativeCaption`, `SystemNode`, `Connection`, `ActivityToken` (o pulso pausa fora do viewport).
 - **SpotlightCard** — superfície de card padrão: gradiente sutil + hairline dupla + spotlight de baixa intensidade que segue o cursor (desktop). Sem efeito "gaming".
 - **Icon** — set linear único, stroke 1.5, grid 24, sempre `aria-hidden`. Não misturar com outros estilos de ícone.
 
