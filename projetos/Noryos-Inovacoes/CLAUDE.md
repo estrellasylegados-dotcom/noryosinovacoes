@@ -17,8 +17,12 @@ Iniciativa pessoal — o usuário é o dono e o cliente ao mesmo tempo.
 
 ## Entregas previstas
 
-Hoje o projeto é **só o site institucional** (`site/`) + docs de briefing. As
-frentes abaixo são previstas — ainda sem pasta nem entrega:
+Frentes com pasta e entrega hoje:
+
+- **Site institucional** (`site/`) — no ar, em evolução
+- **CRM comercial** (`crm/`) — Twenty CRM; descoberta/arquitetura entregue, Fase 1 aprovada (decisões D1–D12, 08/09/2026), aguardando criação do workspace e import piloto do Kaptar
+
+Frentes previstas — ainda sem pasta nem entrega:
 
 - Ads (tráfego pago)
 - Sites
@@ -26,12 +30,14 @@ frentes abaixo são previstas — ainda sem pasta nem entrega:
 - Redes sociais
 - Automações
 - Propostas comerciais
-- CRM (possível, caso o nicho odontologia se confirme)
+
+CRM: a adoção do Twenty deixou de depender do nicho odontologia — é a frente comercial ativa da Noryos.
 
 ## Onde salvar o que
 
 - Briefings e contexto: nessa pasta (`briefing.md`, `decisoes-site.md`, `analise-mercado-design.md`)
 - Site institucional: `site/` (app Next.js) · protótipo estático arquivado: `sites/`
+- CRM comercial (Twenty): `crm/` — `descoberta-e-arquitetura-twenty.md`, `fase-1-runbook-configuracao.md`, `templates/` (CSV de import do Kaptar)
 - Identidade do projeto: `identidade/design-guide.md`
 - Nova frente de entrega: criar a subpasta só quando a primeira entrega existir (`ads/`, `conteudo/`, `automacoes/`, `propostas/`…)
 

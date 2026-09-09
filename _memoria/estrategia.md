@@ -33,12 +33,14 @@ Pós-lançamento da Noryos Inovações — o site institucional está no ar em h
 
 **A `/solucoes` comercial está no ar e VALIDADA EM PRODUÇÃO** (03/09/2026, commit `f944cdd`) — início da fase de vendas, com WhatsApp comercial `5561999256901` ativo e mensagens contextuais por origem. Detalhe na seção "Fase".
 
+**A frente do CRM comercial começou (08/09/2026).** Twenty CRM escolhido como CRM comercial oficial da Noryos — objetivo direto: começar a vender. Sem fork, sem self-host, sem alterar o site. Descoberta/arquitetura entregue (`projetos/Noryos-Inovacoes/crm/descoberta-e-arquitetura-twenty.md`) e **Fase 1 aprovada** com decisões D1–D12 (runbook em `crm/fase-1-runbook-configuracao.md`): Twenty **Cloud Pro no trial de 30 dias** (não contratar anual antes da validação); só objetos nativos (Company/Person/Opportunity/Task/Note), zero Custom Objects; pré-funil na Company via Select `Status de prospecção` (Captado → Em análise → Contato iniciado → Qualificado → Não qualificado → Cliente); Opportunity só nasce quando a Company chega a "Qualificado", com pipeline de 7 stages (Qualificado → Reunião agendada → Diagnóstico → Proposta enviada → Negociação → Fechado → Perdido); ~16 custom fields + 8 views + follow-up manual (1 Task aberta por Company em contato / por Opportunity aberta); dedup por campo único (`Google Place ID` + `Chave de dedup` sintética); import **manual** de CSV do Kaptar (piloto com 5 leads enriquecidos). **Fora desta fase:** API, webhooks, workflows pagos, MCP, IA, e-mail/calendário, WhatsApp, self-host, Custom Apps. Claude não opera a UI do Twenty Cloud — entrega runbook, prepara o CSV e compila o relatório de validação. **Próximo passo:** Rafael cria o workspace (`noryos.twenty.com`, pt-BR, BRL, America/Sao_Paulo) e roda import piloto + teste de duplicação + teste de pipeline; **QUALITY GATE da Fase 1 só APROVADO após demonstração hands-on ponta a ponta** (Kaptar CSV → Company → qualificação → Opportunity → Task → pipeline → fechamento). **Kaptar = fonte inicial de leads** (prospecção → export CSV → import no Twenty). Integração Kaptar↔Twenty por n8n/API é **Fase 3** (segue parada).
+
 **Próximo foco: observar dados reais antes de evoluir.**
 
 1. **Coletar leads reais** pelo `/diagnostico` (funil já instrumentado no `window.dataLayer`, sem PII).
 2. **Medir conversão e drop-off por etapa** — comparar `visualizar_etapa` (1..5) com `diagnostico_enviado_com_sucesso`. Requer plugar o GTM/GA em produção (setar `NEXT_PUBLIC_GTM_ID` na env da Hostinger + redeploy; até lá os eventos ficam só no `dataLayer`, sem envio externo).
 3. **Acumular base** de respostas estruturadas (`respostas` jsonb + `prazo`/`objetivo_principal`/`porte`) para, só depois, decidir e calibrar um **scoring v2** — nunca antes de ter dados reais suficientes. O V1 continua preservado (`scoring_version = "v1"`).
-4. Candidatos parados na fila (só depois): prospecção ativa, blog/SEO, CRM/n8n.
+4. Candidatos parados na fila (só depois): prospecção ativa, blog/SEO. (O CRM comercial saiu da fila — ver o parágrafo "A frente do CRM comercial começou" acima; a integração Kaptar↔Twenty via n8n/API continua parada, é Fase 3.)
 
 Registros permanentes do Form V2: scoring V1 **preservado** · `form_version = v2` · `scoring_version = v1` · investimento **fora** do formulário · prazo e objetivo principal **obrigatórios** · porte **opcional** · analytics do funil **sem PII**.
 
@@ -55,7 +57,7 @@ Histórico: o HTML ficava **atrás do cache da CDN da Hostinger** com TTL longo 
 ## O que pode esperar
 
 - Nicho odontologia (ainda não confirmado)
-- CRM completo / integração com n8n
+- Evolução do CRM Twenty: integração Kaptar↔Twenty via n8n/API (Fase 3), scoring Noryos + enrichment (Fase 4), app próprio no Twenty (Fase 5)
 - Blog e páginas de conteúdo SEO
 - Redes sociais e ads da própria Noryos (o site vem primeiro, por decisão do usuário)
 
