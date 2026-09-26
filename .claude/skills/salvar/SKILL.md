@@ -41,6 +41,14 @@ Detectar com `git rev-parse --is-inside-work-tree`. Se falhar:
 5. Confirmar com link do repositório (extrair de `git remote get-url origin`):
    > "Sincronizado. Ver no GitHub: <URL>"
 
+### Projetos com repositório próprio
+
+Alguns projetos têm repo git separado do workspace (ver "Repositórios separados" no `CLAUDE.md` — hoje `projetos/CaptouLeads/`). Em todo `/salvar`:
+
+1. Se o usuário citar o projeto (ex: "no CaptouLeads"), rodar o workflow de "Commits seguintes" **dentro da pasta dele**.
+2. Se não citar, salvar o workspace normalmente e, no final, checar também cada projeto separado (`git status` + `git status -sb` pra commits não enviados). Se tiver algo pendente, avisar e perguntar se salva lá também.
+3. Repo novo criado manualmente no GitHub: depois do primeiro push, conferir se ficou privado (`curl -s -o /dev/null -w "%{http_code}" https://api.github.com/repos/<dono>/<repo>` → 404 = privado, 200 = público). Se público, avisar.
+
 ## Regras
 
 - Nunca usar `--force` sem o usuário pedir explicitamente

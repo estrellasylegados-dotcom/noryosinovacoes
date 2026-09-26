@@ -103,6 +103,14 @@ usar o contexto naturalmente.
 
 ---
 
+## Repositórios separados
+
+- `projetos/CaptouLeads/` tem repositório git próprio (privado:
+  `estrellasylegados-dotcom/captouleads`) e está fora do repo do
+  workspace. `/salvar` precisa tratar essa pasta à parte.
+
+---
+
 ## Fluxo de trabalho
 
 Antes de executar qualquer tarefa, verificar se existe skill relevante
