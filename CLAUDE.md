@@ -194,3 +194,11 @@ Quando o usuário pedir skill nova:
 4. Se a skill precisar de arquivos de apoio (templates, exemplos),
    criar dentro da pasta da skill
 5. Seguir o fluxo da skill-creator nativa do Claude Code
+
+## CaptouLeads — Deploy e redeploy
+
+CaptouLeads está **DEPLOYADO NA VERCEL** desde 26/09/2026 (https://captouleads-idpc24yyy-estrellasylegados-3424.vercel.app). Quando o usuário tiver **Neon + Resend**, fazer redeploy assim:
+1. Copiar `DATABASE_URL` do Neon (com `-pooler`)
+2. Copiar `RESEND_API_KEY` + `EMAIL_FROM` do Resend
+3. `vercel env add` via CLI ou Settings > Environment Variables no painel Vercel
+4. `vercel deploy --prod` (ou redeploy automático se conectou git)
