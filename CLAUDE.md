@@ -197,8 +197,12 @@ Quando o usuário pedir skill nova:
 
 ## CaptouLeads — Deploy e redeploy
 
-CaptouLeads está **DEPLOYADO NA VERCEL** desde 26/09/2026 (https://captouleads-idpc24yyy-estrellasylegados-3424.vercel.app). Quando o usuário tiver **Neon + Resend**, fazer redeploy assim:
-1. Copiar `DATABASE_URL` do Neon (com `-pooler`)
-2. Copiar `RESEND_API_KEY` + `EMAIL_FROM` do Resend
-3. `vercel env add` via CLI ou Settings > Environment Variables no painel Vercel
-4. `vercel deploy --prod` (ou redeploy automático se conectou git)
+CaptouLeads está **DEPLOYADO NA VERCEL** desde 26/09/2026 (URL pública: https://captouleads.vercel.app — as URLs `captouleads-<hash>-….vercel.app` exigem login da Vercel). Neon e `CRON_SECRET` já configurados em Production. Quando o usuário tiver **Resend**:
+1. Copiar `RESEND_API_KEY` + `EMAIL_FROM` do Resend e setar `EMAIL_TRANSPORT=resend`
+2. `vercel env add` via CLI ou Settings > Environment Variables no painel Vercel
+3. Fazer um **deploy novo** — variável de ambiente só vale em build feito depois dela
+
+Regras de deploy:
+- Deploy principal = `git push` no `main` do repo `captouleads` (dispara sozinho).
+- O Root Directory do projeto na Vercel **precisa** ser `app`; vazio, o deploy via Git falha no `npm ci` (`missing_lock_file`).
+- Diagnosticar falha de build pelos Build Logs reais (API `/v3/deployments/<id>/events`), não por suposição.

@@ -20,12 +20,13 @@ Automatiza o deploy de produção do CaptouLeads na Vercel.
    - `npm run typecheck` — se falhar, parar com erro
 
 3. **Deploy na Vercel**
-   - `vercel deploy --prod --token=<VERCEL_TOKEN>`
-   - Aguardar ~2-3 min
-   - Extrair URL do resultado (`Production: https://...`)
+   - Caminho principal (validado em 26/09/2026): `git push origin main` no repo `captouleads` → a Vercel builda sozinha (Root Directory do projeto = `app`)
+   - Alternativa pela CLI: rodar `vercel deploy --prod` a partir de `projetos/CaptouLeads/` (raiz do repo, por causa do Root Directory `app`) — **não testado** nessa configuração
+   - Acompanhar o deploy até `READY` ou `ERROR` (~1-3 min); se `ERROR`, ler os Build Logs antes de mudar qualquer coisa
 
 4. **Validar em produção**
-   - `curl https://<URL>/api/health` → deve responder `{"ok":true,...}`
+   - `curl https://captouleads.vercel.app/api/health` → deve responder `{"ok":true,"db":true,...}`
+   - `curl -X POST https://captouleads.vercel.app/api/jobs/tick` sem auth → deve responder 401
    - Se falhar, avisar e linkar pro painel Vercel pra debugar
 
 5. **Confirmar**
