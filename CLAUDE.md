@@ -197,7 +197,7 @@ Quando o usuário pedir skill nova:
 
 ## CaptouLeads — Deploy e redeploy
 
-CaptouLeads está **DEPLOYADO NA VERCEL** desde 26/09/2026 (URL pública: https://captouleads.vercel.app — as URLs `captouleads-<hash>-….vercel.app` exigem login da Vercel). Neon, `CRON_SECRET`, `APP_SECRET`, `APP_URL` e **Resend** (`RESEND_API_KEY`, `EMAIL_TRANSPORT=resend`, `EMAIL_FROM`) configurados em Production desde 27/09/2026, mais `TRUSTED_PROXY_HOPS=1`. A `RESEND_API_KEY` foi rotacionada em 27/09/2026 (chave nova só de envio, antiga apagada).
+CaptouLeads está **DEPLOYADO NA VERCEL** desde 26/09/2026 (URL pública: https://captouleads.vercel.app — as URLs `captouleads-<hash>-….vercel.app` exigem login da Vercel). Neon, `CRON_SECRET`, `APP_SECRET`, `APP_URL` e **Resend** (`RESEND_API_KEY`, `EMAIL_TRANSPORT=resend`, `EMAIL_FROM`) configurados em Production desde 27/09/2026, mais `TRUSTED_PROXY_HOPS=1`. A `RESEND_API_KEY` foi rotacionada em 27/09/2026 (chave nova só de envio, antiga apagada). Mercado Pago em **modo de teste** desde 27/09/2026: `MP_ACCESS_TOKEN` e `MP_WEBHOOK_SECRET` (Secret, do vendedor de teste), `BILLING_PROVIDER=mercadopago`, `MP_TEST_PAYER_EMAIL` (comprador de teste) e `BILLING_ALLOWED_EMAILS` (só as contas smoke abrem checkout).
 
 Regras de deploy:
 - Variável de ambiente só vale em build feito depois dela: sem commit, usar `vercel redeploy <url do deploy de produção atual> --target production`.
@@ -208,3 +208,6 @@ Regras de deploy:
 - Diagnosticar falha de build pelos Build Logs reais (API `/v3/deployments/<id>/events`), não por suposição.
 - Segredo novo (chave de API, connection string) nunca vai pro chat: o usuário salva num arquivo local, o Claude lê sem exibir o valor, configura na Vercel e apaga o arquivo.
 - A chave do Resend é só de envio: não consulta status de e-mail pela API. Para testar entrega, pedir recuperação de senha de uma conta `+smoke` (cai no Gmail do usuário) e ele confirma o recebimento.
+- Antes de liberar pagamento a clientes: remover `MP_TEST_PAYER_EMAIL` e `BILLING_ALLOWED_EMAILS`, trocar para credenciais reais do Mercado Pago e ter aprovação explícita do usuário.
+- O plugin oficial do Mercado Pago não funciona aqui (o login OAuth leva 403 do firewall do Mercado Livre): usar o painel "Suas integrações" com contas de teste vendedor/comprador.
+- No sandbox, o Mastercard de teste não aceita recorrência: usar o Visa `4235 6477 2802 5682` (CVV 123, 11/30, titular `APRO` aprova, `OTHE` recusa).
