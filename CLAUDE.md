@@ -197,7 +197,7 @@ Quando o usuário pedir skill nova:
 
 ## CaptouLeads — Deploy e redeploy
 
-CaptouLeads está **DEPLOYADO NA VERCEL** desde 26/09/2026 (URL pública: https://captouleads.vercel.app — as URLs `captouleads-<hash>-….vercel.app` exigem login da Vercel). Neon, `CRON_SECRET`, `APP_SECRET`, `APP_URL` e **Resend** (`RESEND_API_KEY`, `EMAIL_TRANSPORT=resend`, `EMAIL_FROM`) configurados em Production desde 27/09/2026.
+CaptouLeads está **DEPLOYADO NA VERCEL** desde 26/09/2026 (URL pública: https://captouleads.vercel.app — as URLs `captouleads-<hash>-….vercel.app` exigem login da Vercel). Neon, `CRON_SECRET`, `APP_SECRET`, `APP_URL` e **Resend** (`RESEND_API_KEY`, `EMAIL_TRANSPORT=resend`, `EMAIL_FROM`) configurados em Production desde 27/09/2026, mais `TRUSTED_PROXY_HOPS=1`. A `RESEND_API_KEY` foi rotacionada em 27/09/2026 (chave nova só de envio, antiga apagada).
 
 Regras de deploy:
 - Variável de ambiente só vale em build feito depois dela: sem commit, usar `vercel redeploy <url do deploy de produção atual> --target production`.
@@ -206,3 +206,5 @@ Regras de deploy:
 - Deploy principal = `git push` no `main` do repo `captouleads` (dispara sozinho).
 - O Root Directory do projeto na Vercel **precisa** ser `app`; vazio, o deploy via Git falha no `npm ci` (`missing_lock_file`).
 - Diagnosticar falha de build pelos Build Logs reais (API `/v3/deployments/<id>/events`), não por suposição.
+- Segredo novo (chave de API, connection string) nunca vai pro chat: o usuário salva num arquivo local, o Claude lê sem exibir o valor, configura na Vercel e apaga o arquivo.
+- A chave do Resend é só de envio: não consulta status de e-mail pela API. Para testar entrega, pedir recuperação de senha de uma conta `+smoke` (cai no Gmail do usuário) e ele confirma o recebimento.
