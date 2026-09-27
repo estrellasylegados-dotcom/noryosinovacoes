@@ -197,12 +197,12 @@ Quando o usuário pedir skill nova:
 
 ## CaptouLeads — Deploy e redeploy
 
-CaptouLeads está **DEPLOYADO NA VERCEL** desde 26/09/2026 (URL pública: https://captouleads.vercel.app — as URLs `captouleads-<hash>-….vercel.app` exigem login da Vercel). Neon e `CRON_SECRET` já configurados em Production. Quando o usuário tiver **Resend**:
-1. Copiar `RESEND_API_KEY` + `EMAIL_FROM` do Resend e setar `EMAIL_TRANSPORT=resend`
-2. `vercel env add` via CLI ou Settings > Environment Variables no painel Vercel
-3. Fazer um **deploy novo** — variável de ambiente só vale em build feito depois dela
+CaptouLeads está **DEPLOYADO NA VERCEL** desde 26/09/2026 (URL pública: https://captouleads.vercel.app — as URLs `captouleads-<hash>-….vercel.app` exigem login da Vercel). Neon, `CRON_SECRET`, `APP_SECRET`, `APP_URL` e **Resend** (`RESEND_API_KEY`, `EMAIL_TRANSPORT=resend`, `EMAIL_FROM`) configurados em Production desde 27/09/2026.
 
 Regras de deploy:
+- Variável de ambiente só vale em build feito depois dela: sem commit, usar `vercel redeploy <url do deploy de produção atual> --target production`.
+- `APP_SECRET` **nunca** pode ser trocado: invalida os segredos criptografados e os hashes gravados.
+- `vercel env add` pelo terminal trava esperando entrada: rodar com `--value "<valor>" --yes < /dev/null`.
 - Deploy principal = `git push` no `main` do repo `captouleads` (dispara sozinho).
 - O Root Directory do projeto na Vercel **precisa** ser `app`; vazio, o deploy via Git falha no `npm ci` (`missing_lock_file`).
 - Diagnosticar falha de build pelos Build Logs reais (API `/v3/deployments/<id>/events`), não por suposição.
