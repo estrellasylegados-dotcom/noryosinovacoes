@@ -108,6 +108,12 @@ usar o contexto naturalmente.
 - `projetos/CaptouLeads/` tem repositório git próprio (privado:
   `estrellasylegados-dotcom/captouleads`) e está fora do repo do
   workspace. `/salvar` precisa tratar essa pasta à parte.
+- A exclusão dessa pasta é **local** (`.git/info/exclude`, não viaja no
+  clone). Em computador novo: clonar o `captouleads` dentro de
+  `projetos/CaptouLeads` e acrescentar `projetos/CaptouLeads/` ao
+  `.git/info/exclude` do workspace.
+- Plano vigente do CaptouLeads: `projetos/CaptouLeads/docs/plano-evolucao-v2.md`
+  (executar uma fase por vez; a tabela de acompanhamento fica na seção 9).
 
 ---
 
