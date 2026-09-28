@@ -213,6 +213,7 @@ Regras de deploy:
 - `vercel env add` pelo terminal trava esperando entrada: rodar com `--value "<valor>" --yes < /dev/null`.
 - Deploy principal = `git push` no `main` do repo `captouleads` (dispara sozinho).
 - O Root Directory do projeto na Vercel **precisa** ser `app`; vazio, o deploy via Git falha no `npm ci` (`missing_lock_file`).
+- Flags da V2 (`LIVE_MODE_ENABLED`, `PAGESPEED_ENABLED` etc.) ligam pelo admin em **Configurações → Recursos (flags)**, sem redeploy (vale a partir do deploy do commit `81a51cb`). Variável de ambiente na Vercel tem prioridade e bloqueia o botão.
 - Diagnosticar falha de build pelos Build Logs reais (API `/v3/deployments/<id>/events`), não por suposição.
 - Segredo novo (chave de API, connection string) nunca vai pro chat: o usuário salva num arquivo local, o Claude lê sem exibir o valor, configura na Vercel e apaga o arquivo.
 - A chave do Resend é só de envio: não consulta status de e-mail pela API. Para testar entrega, pedir recuperação de senha de uma conta `+smoke` (cai no Gmail do usuário) e ele confirma o recebimento.
